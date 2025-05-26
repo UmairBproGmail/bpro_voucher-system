@@ -1,1 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Payment Voucher</title>
+   <style>
+       body { font-family: Arial, sans-serif; margin: 20px; font-size: 10pt; line-height: 1.3; } /* Base font size */
+       .voucher-container { max-width: 800px; margin: 0 auto; } /* A bit smaller for A4 */
+       .voucher-header { margin-bottom: 12px; overflow: auto; }
+       .voucher-title {
+           font-weight: bold;
+           font-size: 18pt; /* Adjusted */
+           margin-bottom: 4px;
+           text-align: center;
+           color: #333;
+       }
+       .voucher-number {
+           text-align: right;
+           margin-bottom: 12px;
+           font-size: 9pt; /* Adjusted */
+           color: #555;
+       }
+       .logo { width: 100px; height: auto; object-fit: contain; float: right; margin-right:650px; margin-top: 30px;}
+       .field-row { display: flex; align-items: center; margin-bottom: 6px; font-size: 9pt; }
+       .field-row .label-text { width: 100px; font-weight: bold; color: #444;} /* Class for labels */
+       .field-row .value-display, .field-row .checkbox-like { /* Checkbox-like styling */
+           border: 1px solid #bbb;
+           background: #f9f9f9;
+           padding: 2px 6px;
+           min-width: 90px;
+           margin-right: 12px;
+       }
+       .checkbox-like { /* For displaying 'X' or similar for payment type */
+           display: inline-block;
+           min-width: 18px;
+           text-align: center;
+           font-weight: bold;
+       }
+       .section-title {
+           font-weight: bold;
+           margin: 18px 0 5px 0;
+           font-size: 11pt; /* Adjusted */
+           color: #333;
+           border-bottom: 1px solid #eee;
+           padding-bottom: 3px;
+       }
+       .sub-section-title {
+           font-weight: bold;
+           margin: 10px 0 3px 0;
+           font-size: 9pt; /* Adjusted */
+           color: #444;
+       }
+       .account-details-table, .items-table {
+           width: 100%;
+           border-collapse: collapse;
+           margin-bottom: 12px;
+           font-size: 9pt; /* Adjusted for table content */
+       }
+       .account-details-table td, .account-details-table th,
+       .items-table td, .items-table th {
+           border: 1px solid #ccc; /* Lighter border */
+           padding: 3px 5px;
+           word-break: break-word;
+           vertical-align: top;
+       }
+       .account-details-table th { width: 110px; background: #f0f0f0; text-align: left; font-weight:normal; color:#555}
+       .items-table th { background: #f0f0f0; text-align: left; font-weight:normal; color:#555;}
+       .items-table tfoot td {
+           font-weight: bold;
+           background: #e8e8e8; /* Slightly darker footer */
+           text-align: right;
+           border-top: 1.5px solid #aaa; /* Stronger top border for footer */
+           padding: 4px 5px;
+       }
+       .approval-section {
+           display: flex;
+           margin-top: 30px;
+           justify-content: space-between;
+           page-break-inside: avoid; /* Try to keep approval section on one page */
+       }
+       .approval-block {
+           width: 30%; /* Slightly less width */
+           border: 1px solid #ddd;
+           padding: 8px;
+           box-sizing: border-box;
+           text-align: center; /* Center content within block */
+       }
+       .approval-block .approval-label { /* Renamed class */
+           display: block;
+           font-size: 8pt; /* Adjusted */
+           margin-bottom: 4px;
+           color: #555;
+           font-weight: bold;
+       }
+       .approval-block .signature-image-container {
+           height: 40px; /* Give it space for the image */
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           border-bottom: 1px solid #555; /* Retain line appearance if desired */
+           margin-bottom: 3px;
+       }
+       .approval-block .signature-image-container img {
+           max-width: 100%; /* Ensure image fits within container */
+           max-height: 100%; /* Ensure image fits within container */
+           object-fit: contain;
+       }
+       .approval-block .name-value-display { /* Renamed class */
+           font-size: 9pt;
+           min-height: 15px;
+           padding-top: 2px;
+           color: #333;
+       }
+       .approval-block .review-title {
+           font-weight: bold;
+           margin-bottom: 3px;
+           font-size: 10pt; /* Adjusted */
+           text-align: center;
+           color: #333;
+       }
+       .total-amount-display { /* Renamed class */
+           font-weight: bold;
+           font-size: 11pt; /* Adjusted */
+           margin-top: 6px;
+           text-align: right;
+           color: #222;
+       }
+       .divider {
+           border-top: 1px solid #888;
+           margin: 10px 0;
+       }
+        /* Helper for empty cells to maintain structure */
+       .empty-cell { color: #aaa; font-style: italic; }
+       td { min-height: 1.2em; } /* Ensure cells have some height */
+   </style>
+</head>
+<body>
+<div class="voucher-container">
+   <div class="voucher-header">
+       {% if voucher_data_from_form.voucher_logo_url and voucher_data_from_form.voucher_logo_url != 'None' and voucher_data_from_form.voucher_logo_url.strip() %}
+       <img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Logo" class="logo">
+       {% endif %}
+       <div class="voucher-title">PAYMENT VOUCHER</div>
+       <div class="voucher-number">
+           Voucher No. {{ voucher_data_from_form.request_id }}<br>
+           Dated: {{ voucher_data_from_form.approval_date.split()[0] if voucher_data_from_form.approval_date else 'N/A' }}
+       </div>
+   </div>
 
+   <div class="section-title">Payment Details</div>
+   <div class="field-row">
+       <span class="label-text">Payment Type:</span>
+       <span class="value-display">{{ voucher_data_from_form.voucher_payment_type }}</span>
+   </div>
+   <div class="field-row">
+       <span class="label-text">Payment From:</span>
+       <span class="value-display">{{ voucher_data_from_form.payment_from_bank | default('N/A', true) }}</span>
+   </div>
+
+
+   <div class="sub-section-title">Payee Information</div>
+   <table class="account-details-table">
+       <tr>
+           <th>Account Title:</th>
+           <td>{{ voucher_data_from_form.voucher_account_title | default(' ', true) }}</td>
+           <th>Bank Name:</th>
+           <td>{{ voucher_data_from_form.voucher_bank_name | default(' ', true) }}</td>
+       </tr>
+       <tr>
+           <th>IBAN/Account No:</th>
+           <td>{{ voucher_data_from_form.voucher_iban | default(' ', true) }}</td>
+       </tr>
+   </table>
+
+   <div class="section-title">Details</div>
+   <table class="items-table">
+       <thead>
+           <tr>
+               <th style="width:5%;">Sr.#</th>
+               <th style="width:25%;">Item Name</th>
+               <th style="width:35%;">Description</th>
+               <th style="width:10%; text-align:right;">Qty</th>
+               <th style="width:10%; text-align:right;">Rate</th>
+               <th style="width:15%; text-align:right;">Amount</th>
+           </tr>
+       </thead>
+       <tbody>
+           {% for item in voucher_data_from_form.items_for_loop %}
+           <tr>
+               <td style="text-align:center;">{{ loop.index }}</td>
+               <td>{{ item.name | default(' ', true) }}</td>
+               <td>{{ item.description | default(' ', true) }}</td>
+               <td style="text-align:right;">{{ "%.2f"|format(item.quantity|float) if item.quantity else '0.00' }}</td>
+               <td style="text-align:right;">{{ "%.2f"|format(item.rate|float) if item.rate else '0.00' }}</td>
+               <td style="text-align:right;">{{ "%.2f"|format(item.amount|float) if item.amount else '0.00' }}</td>
+           </tr>
+           {% endfor %}
+           <!-- Fill remaining rows up to 5 if less than 5 items -->
+           {% for i in range(voucher_data_from_form.items_for_loop|length + 1, 6) %}
+           <tr>
+               <td style="text-align:center;">{{ i }}</td>
+               <td><span class="empty-cell"> </span></td> <td><span class="empty-cell"> </span></td>
+               <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td>
+           </tr>
+           {% endfor %}
+       </tbody>
+        <tfoot>
+           <tr>
+               <td colspan="5">TOTAL</td>
+               <td>{{ voucher_data_from_form.voucher_currency_for_total | default('Rs.', true) }} {{ "%.2f"|format(voucher_data_from_form.voucher_total_amount|float) if voucher_data_from_form.voucher_total_amount else '0.00' }}</td>
+           </tr>
+       </tfoot>
+   </table>
+<span style="display:inline-block; width:40px;"></span>
+
+   <div class="divider"></div>
+
+   <div class="approval-section">
+       <div class="approval-block">
+           <div class="review-title">Prepared By</div>
+           {# Signature goes on the line #}
+           <div class="signature-image-container">
+                {{ voucher_data_from_form.prepared_by_signature_html | safe }}
+           </div>
+           <div class="approval-label">Name:</div>
+           <div class="name-value-display">{{ voucher_data_from_form.prepared_by_name_selected | default('N/A', true) }}</div>
+       </div>
+       <div class="approval-block">
+           <div class="review-title">Finance Review</div>
+           {# Signature goes on the line #}
+            <div class="signature-image-container">
+                {{ voucher_data_from_form.finance_signature_html | safe }}
+            </div>
+           <div class="approval-label">Name:</div>
+           <div class="name-value-display">{{ voucher_data_from_form.finance_review_name | default('N/A', true) }}</div>
+       </div>
+       <div class="approval-block">
+           <div class="review-title">Approved By</div>
+           {# Signature goes on the line #}
+            <div class="signature-image-container">
+                {{ voucher_data_from_form.approved_by_signature_html | safe }}
+            </div>
+           <div class="approval-label">Name:</div>
+           <div class="name-value-display">{{ voucher_data_from_form.approved_by_name | default('N/A', true) }}</div>
+       </div>
+   </div>
+</div>
+</body>
+</html>
