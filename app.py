@@ -128,7 +128,7 @@ import sys
 if sys.platform == "win32":
     WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 else:
-    WKHTMLTOPDF_PATH = '/usr/local/bin/wkhtmltopdf'
+    WKHTMLTOPDF_PATH = '/Users/muhammadumair/PycharmProjects/Voucher System/wkhtmltopdf/bin/wkhtmltopdf.exe'
 
 PDFKIT_CONFIG = None
 if WKHTMLTOPDF_PATH and os.path.exists(WKHTMLTOPDF_PATH) and os.access(WKHTMLTOPDF_PATH, os.X_OK):
