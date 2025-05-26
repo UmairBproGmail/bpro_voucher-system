@@ -198,13 +198,15 @@ def allowed_file(filename):
 
 
 def get_google_auth_flow():
-    client_secrets_path = 'credentials.json'
-    if not os.path.exists(client_secrets_path):
-        logging.error(f"{client_secrets_path} not found. OAuth flow cannot be initialized.")
-    return Flow.from_client_secrets_file(
-        client_secrets_path,
-        scopes=SCOPES,
-        redirect_uri=url_for('oauth2callback', _external=True)
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if not creds_json:
+        raise RuntimeError("GOOGLE_CREDENTIALS environment variable not set.")
+
+    creds = json.loads(creds_json)
+    return Flow.from_client_config(
+        creds,
+        scopes=['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/userinfo.email', 'openid'],
+        redirect_uri='https://your-render-url.onrender.com/oauth2callback'
     )
 
 
