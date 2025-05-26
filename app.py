@@ -1130,10 +1130,6 @@ def generate_pdf(data, approval_type, attachment_path=None):
 
 
 @app.route('/')
-
-def home():
-    return render_template('dashboard.html')
-
 def index():
     creds = get_credentials()
     if not creds:
