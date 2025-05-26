@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>{{ portal_name }} Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <style>
+        :root {
+          --primary-color: #3498db;
+          --dark-color: #2c3e50;
+          --border-color: #ddd;
+          --shadow-color: rgba(0, 0, 0, 0.1);
+          --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+
+       body {
+           font-family: var(--font-main);
+           background-color: #f5f7fa;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           min-height: 100vh;
+           margin: 0;
+       }
+       .login-container {
+           background: white;
+           padding: 30px;
+           border-radius: 10px;
+           box-shadow: 0 0 20px var(--shadow-color);
+           text-align: center;
+           max-width: 400px;
+           width: 90%;
+       }
+       .login-container h1 {
+           margin-bottom: 20px;
+           color: var(--dark-color);
+           font-size: 1.8rem;
+       }
+        .login-container i {
+           margin-right: 10px;
+           color: var(--primary-color);
+        }
+       .form-group {
+           margin-bottom: 15px;
+           text-align: left;
+       }
+       label {
+           display: block;
+           margin-bottom: 5px;
+           font-weight: bold;
+           color: var(--dark-color);
+       }
+       input[type="text"],
+       input[type="password"] {
+           width: 100%;
+           padding: 10px;
+           border: 1px solid var(--border-color);
+           border-radius: 5px;
+           font-size: 1rem;
+            box-sizing: border-box;
+       }
+        .input-with-icon {
+           position: relative;
+        }
+       .input-with-icon i {
+           position: absolute;
+           left: 10px;
+           top: 50%;
+           transform: translateY(-50%);
+           color: #7f8c8d;
+           margin-right: 0;
+       }
+       .input-with-icon input {
+           padding-left: 35px;
+       }
+
+
+       button {
+           width: 100%;
+           padding: 10px;
+           background-color: var(--primary-color);
+           color: white;
+           border: none;
+           border-radius: 5px;
+           font-size: 1.1rem;
+           cursor: pointer;
+           transition: background-color 0.3s ease;
+       }
+       button:hover {
+           background-color: #2980b9;
+       }
+       .error-message {
+           color: #e74c3c;
+           margin-top: 10px;
+           font-size: 0.9rem;
+       }
+        .top-links {
+           margin-top: 20px;
+           border-top: 1px solid var(--border-color);
+           padding-top: 15px;
+           text-align: center;
+        }
+        .top-links a {
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .top-links a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+   </style>
+</head>
+<body>
+   <div class="login-container">
+       <h1><i class="fas fa-user-lock"></i> {{ portal_name }} Login</h1>
+       <form method="POST">
+           <div class="form-group">
+               <label for="username">Username:</label>
+               <div class="input-with-icon">
+                   <i class="fas fa-user"></i>
+                   <input type="text" id="username" name="username" required>
+               </div>
+           </div>
+           <div class="form-group">
+               <label for="password">Password:</label>
+                <div class="input-with-icon">
+                   <i class="fas fa-lock"></i>
+                   <input type="password" id="password" name="password" required>
+               </div>
+           </div>
+           <button type="submit">Login</button>
+       </form>
+       {% if error %}
+           <p class="error-message">{{ error }}</p>
+       {% endif %}
+
+       <div class="top-links">
+           <a href="{{ url_for('index') }}"><i class="fas fa-arrow-left"></i> Back to Request Form</a>
+       </div>
+   </div>
+</body>
+</html>

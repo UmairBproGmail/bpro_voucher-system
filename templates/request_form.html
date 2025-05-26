@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Request Form</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+      :root {
+          --primary-color: #3498db;
+          --secondary-color: #2ecc71;
+          --danger-color: #e74c3c;
+          --dark-color: #2c3e50;
+          --light-color: #ecf0f1;
+          --border-color: #ddd;
+          --shadow-color: rgba(0, 0, 0, 0.1);
+          --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+          font-family: var(--font-main);
+          background-color: #f5f7fa;
+          color: #333;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+      }
+
+      .form-container {
+          max-width: 800px;
+          margin: 2rem auto;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 0 20px var(--shadow-color);
+          overflow: hidden;
+      }
+
+      .form-header {
+          padding: 2rem;
+          background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+          color: white;
+          text-align: center;
+      }
+
+      .form-header h1 {
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+      }
+
+      .required-star {
+          color: var(--danger-color);
+          font-weight: bold;
+      }
+
+      .form-content {
+          padding: 2rem;
+      }
+
+      .form-section {
+          margin-bottom: 2rem;
+      }
+
+      .form-section h2 {
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
+          color: var(--dark-color);
+          border-bottom: 2px solid var(--light-color);
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+      }
+
+      .form-group {
+          margin-bottom: 1.5rem;
+      }
+
+      label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: var(--dark-color);
+      }
+
+      label.required:after {
+          content: " *";
+          color: var(--danger-color);
+      }
+
+      input, select, textarea {
+          width: 100%;
+          padding: 0.8rem;
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          font-family: var(--font-main);
+          font-size: 0.95rem;
+          box-sizing: border-box;
+      }
+
+      .input-with-icon {
+          position: relative;
+      }
+
+      .input-with-icon i {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #7f8c8d;
+      }
+
+      .input-with-icon input {
+          padding-left: 35px;
+      }
+
+      textarea {
+          min-height: 100px;
+          resize: vertical;
+      }
+
+      .file-upload-wrapper {
+          position: relative;
+      }
+
+      .file-upload-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 1.5rem;
+          border: 2px dashed var(--border-color);
+          border-radius: 6px;
+          background-color: #fafafa;
+          cursor: pointer;
+          text-align: center;
+      }
+
+      .file-upload-label i {
+           font-size: 1.2rem;
+      }
+
+      .file-upload-label span {
+          max-width: calc(100% - 2rem); /* Prevent text overflow */
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+      }
+
+      input[type="file"] {
+          position: absolute;
+          opacity: 0;
+          width: 100%;
+          height: 100%;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+      }
+
+      .currency-select {
+          width: 100%;
+          padding: 0.8rem 2.5rem 0.8rem 0.8rem;
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          font-family: var(--font-main);
+          font-size: 0.95rem;
+          background-color: white;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 0.8rem center;
+          background-size: 1rem;
+      }
+
+      .error-message {
+          color: var(--danger-color);
+          font-size: 0.85rem;
+          margin-top: 0.3rem;
+          display: none;
+      }
+
+      .form-footer {
+          padding: 1.5rem;
+          background-color: #f8f9fa;
+          border-top: 1px solid var(--border-color);
+          text-align: right;
+      }
+
+      .button-container {
+           display: flex;
+           justify-content: flex-end; /* Align buttons to the right */
+           align-items: center; /* Vertically center items if different heights */
+           gap: 1rem;
+           flex-wrap: wrap;
+      }
+
+      .btn {
+          padding: 0.8rem 1.5rem;
+          border: none;
+          border-radius: 6px;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: background-color 0.3s ease;
+           text-decoration: none; /* Ensure buttons acting as links look like buttons */
+           justify-content: center; /* Center content in button */
+      }
+
+      .btn:disabled {
+           opacity: 0.6;
+           cursor: not-allowed;
+      }
+
+      .btn-primary {
+          background-color: var(--primary-color);
+          color: white;
+      }
+       .btn-primary:hover:not(:disabled) {
+           background-color: #2980b9;
+       }
+
+      .btn-secondary {
+          background-color: var(--secondary-color);
+          color: white;
+      }
+       .btn-secondary:hover:not(:disabled) {
+           background-color: #229954;
+       }
+
+      .btn-info {
+          background-color: #3498db;
+          color: white;
+      }
+       .btn-info:hover:not(:disabled) {
+            background-color: #2980b9;
+       }
+
+       .btn-dashboard {
+            background-color: #7f8c8d; /* Grey color for dashboard */
+            color: white;
+       }
+       .btn-dashboard:hover:not(:disabled) {
+            background-color: #95a5a6;
+       }
+
+      .modal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+      }
+
+      .modal-content {
+          background-color: white;
+          margin: auto;
+          padding: 2rem;
+          border-radius: 10px;
+          max-width: 500px;
+          text-align: center;
+          position: relative;
+      }
+
+      .modal-icon {
+          font-size: 4rem;
+          margin-bottom: 1rem;
+          color: var(--secondary-color);
+      }
+
+      .modal-icon.error {
+           color: var(--danger-color);
+      }
+
+      .close-modal {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #888;
+      }
+       .close-modal:hover {
+           color: #555;
+       }
+
+      .qty-amount-currency-row {
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+      }
+
+      .qty-field {
+          width: 100px;
+          flex-shrink: 0;
+      }
+
+      .amount-field {
+          flex: 1;
+          min-width: 120px;
+          position: relative;
+      }
+
+      .amount-field .input-with-icon {
+          width: 100%;
+      }
+
+      .currency-field {
+          width: 120px;
+          flex-shrink: 0;
+      }
+
+      .qty-field .error-message,
+      .amount-field .error-message,
+      .currency-field .error-message {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          box-sizing: border-box;
+          padding-right: 5px;
+      }
+      /* Notification styles */
+      .notification {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          padding: 15px 20px;
+          border-radius: 5px;
+          color: white;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+          z-index: 2000;
+          transition: opacity 0.3s ease, transform 0.3s ease;
+          opacity: 0;
+          transform: translateY(20px);
+      }
+      .notification.show {
+          opacity: 1;
+          transform: translateY(0);
+      }
+      .notification.success { background-color: var(--secondary-color); }
+      .notification.error { background-color: var(--danger-color); }
+      .notification.info { background-color: var(--primary-color); }
+
+
+      @media (max-width: 768px) {
+          .qty-amount-currency-row {
+              flex-direction: column;
+              gap: 1.5rem;
+          }
+
+          .qty-field,
+          .amount-field,
+          .currency-field {
+              width: 100% !important;
+              margin: 0 !important;
+          }
+
+          .amount-field label {
+              text-align: left;
+          }
+
+          .qty-field .error-message,
+          .amount-field .error-message,
+          .currency-field .error-message {
+              position: static;
+              white-space: normal;
+              padding-right: 0;
+          }
+
+           .button-container {
+               flex-direction: column;
+               align-items: stretch;
+           }
+            .btn {
+               justify-content: center;
+            }
+           .button-container .btn-dashboard {
+                width: 100%;
+           }
+      }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+      <div class="form-header">
+          <h1><i class="fas fa-file-signature"></i> Request Form</h1>
+          <p>Please fill out all required fields marked with <span class="required-star">*</span></p>
+      </div>
+
+      <div class="form-content">
+          <form id="requestForm" enctype="multipart/form-data">
+              <div class="form-section">
+                  <h2><i class="fas fa-building"></i> Company Details</h2>
+                  <div class="form-group">
+                      <label for="companyName" class="required">Company Name</label>
+                      <select id="companyName" name="companyName" required>
+                          <option value="" disabled selected>Select Company</option>
+                          {% for name, url in company_logos.items() %}
+                          <option value="{{ name }}">{{ name }}</option>
+                          {% endfor %}
+                      </select>
+                      <div class="error-message" id="companyNameError"></div>
+                  </div>
+              </div>
+
+              <div class="form-section">
+                  <h2><i class="fas fa-user-circle"></i> Personal Information</h2>
+                  <div class="form-group">
+                      <label for="name" class="required">Full Name</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-user"></i>
+                          <input type="text" id="name" name="name" required placeholder="John Doe">
+                      </div>
+                      <div class="error-message" id="nameError"></div>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="email" class="required">Email Address</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-envelope"></i>
+                          <input type="email" id="email" name="email" required placeholder="john@example.com">
+                      </div>
+                      <div class="error-message" id="emailError"></div>
+                  </div>
+              </div>
+
+              <div class="form-section">
+                  <h2><i class="fas fa-university"></i> Bank Details</h2>
+                  <div class="form-group">
+                      <label for="accountTitle" class="required">Account Title</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-heading"></i>
+                          <input type="text" id="accountTitle" name="accountTitle" required placeholder="Account Holder Name">
+                      </div>
+                      <div class="error-message" id="accountTitleError"></div>
+                  </div>
+                  <div class="form-group">
+                      <label for="accountNumber" class="required">Account Number</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-hashtag"></i>
+                          <input type="text" id="accountNumber" name="accountNumber" placeholder="e.g., 1234567890">
+                      </div>
+                      <div class="error-message" id="accountNumberError"></div>
+                  </div>
+                  <div class="form-group">
+                      <label for="ibanNumber" class="required">IBAN Number</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-money-check-alt"></i>
+                          <input type="text" id="ibanNumber" name="ibanNumber" placeholder="e.g., PKxxBANKxxxxxxxxxxxxxxxxx">
+                      </div>
+                      <div class="error-message" id="ibanNumberError"></div>
+                  </div>
+                   <div class="form-group">
+                      <label for="bankName" class="required">Bank Name</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-university"></i>
+                          <input type="text" id="bankName" name="bankName" required placeholder="e.g., Meezan Bank, HBL">
+                      </div>
+                      <div class="error-message" id="bankNameError"></div>
+                  </div>
+              </div>
+
+
+              <div class="form-section">
+                  <h2><i class="fas fa-money-bill-wave"></i> Payment Information</h2>
+                  <div class="form-group">
+                      <label for="paymentType" class="required">Payment Type</label>
+                      <select id="paymentType" name="paymentType" required>
+                          <option value="" disabled selected>Select Payment Type</option>
+                          <option value="Expense">Expense</option>
+                          <option value="Reimbursement">Reimbursement</option>
+                          <option value="Bill">Bill</option>
+                          <option value="Invoice">Invoice</option>
+                      </select>
+                      <div class="error-message" id="paymentTypeError"></div>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="description" class="required">Description</label>
+                      <textarea id="description" name="description" required placeholder="Detailed description of the request"></textarea>
+                      <div class="error-message" id="descriptionError"></div>
+                  </div>
+
+                  <div class="qty-amount-currency-row">
+                      <div class="form-group qty-field">
+                          <label for="quantity" class="required">Qty</label>
+                          <input type="number" id="quantity" name="quantity" min="1" required placeholder="1">
+                          <div class="error-message" id="quantityError"></div>
+                      </div>
+
+                      <div class="form-group amount-field">
+                          <label for="amount" class="required">Amount</label>
+                          <div class="input-with-icon">
+                              <input type="number" id="amount" name="amount" min="0.01" step="0.01" required placeholder="0.00">
+                          </div>
+                          <div class="error-message" id="amountError"></div>
+                      </div>
+
+                      <div class="form-group currency-field">
+                          <label for="currency">Currency</label>
+                          <select id="currency" name="currency" class="currency-select">
+                              <option value="PKR" selected>PKR</option>
+                              <option value="EUR">EUR</option>
+                              <option value="GBP">GBP</option>
+                              <option value="JPY">JPY</option>
+                              <option value="AUD">AUD</option>
+                              <option value="CAD">CAD</option>
+                              <option value="USD">USD</option>
+                              <option value="CNY">CNY</option>
+                              <option value="HKD">HKD</option>
+                              <option value="NZD">NZD</option>
+                              <option value="SEK">SEK</option>
+                              <option value="KRW">KRW</option>
+                              <option value="SGD">SGD</option>
+                              <option value="NOK">NOK</option>
+                              <option value="MXN">MXN</option>
+                              <option value="INR">INR</option>
+                              <option value="BRL">BRL</option>
+                              <option value="RUB">RUB</option>
+                              <option value="ZAR">ZAR</option>
+                              <option value="AED">AED</option>
+                              <option value="SAR">SAR</option>
+                              <option value="TRY">TRY</option>
+                              <option value="THB">THB</option>
+                              <option value="MYR">MYR</option>
+                              <option value="IDR">IDR</option>
+                              <option value="PHP">PHP</option>
+                              <option value="VND">VND</option>
+                              <option value="PLN">PLN</option>
+                              <option value="CZK">CZK</option>
+                              <option value="HUF">HUF</option>
+                              <option value="RON">RON</option>
+                              <option value="ILS">ILS</option>
+                              <option value="CLP">CLP</option>
+                              <option value="COP">COP</option>
+                              <option value="PEN">PEN</option>
+                              <option value="ARS">ARS</option>
+                          </select>
+                          <div class="error-message" id="currencyError"></div>
+                      </div>
+                  </div>
+              </div>
+
+
+              <div class="form-section">
+                  <h2><i class="fas fa-file-upload"></i> Supporting Documents</h2>
+                  <div class="form-group">
+                      <label for="document" class="required">Supporting Document</label>
+                      <div class="file-upload-wrapper">
+                          <input type="file" id="document" name="document" required>
+                          <label for="document" class="file-upload-label">
+                              <i class="fas fa-cloud-upload-alt"></i>
+                              <span id="fileLabelText">Choose a file or drag it here</span>
+                          </label>
+                      </div>
+                      <div class="error-message" id="documentError"></div>
+                  </div>
+              </div>
+
+              <input type="hidden" id="action" name="action" value="">
+          </form>
+      </div>
+
+      <div class="form-footer">
+          <div class="button-container">
+              <a href="{{ url_for('dashboard_login') }}" class="btn btn-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+
+              <button type="button" id="mainSubmitBtn" class="btn btn-primary">
+                  <i class="fas fa-paper-plane"></i> Submit Request
+              </button>
+
+              <button type="button" id="previewPdfBtn" class="btn btn-info" style="display: none;">
+                  <i class="fas fa-file-pdf"></i> Preview PDF
+              </button>
+              <button type="button" id="standardApprovalBtn" class="btn btn-primary" style="display: none;">
+                  <i class="fas fa-user-check"></i> Send for Standard Approval
+              </button>
+              <button type="button" id="ceoApprovalBtn" class="btn btn-secondary" style="display: none;">
+                  <i class="fas fa-user-tie"></i> Send for CEO Approval
+              </button>
+              <button type="button" id="cancelBtn" class="btn" style="display: none; background-color: #ccc;">
+               <i class="fas fa-times"></i> Cancel
+              </button>
+          </div>
+           <div id="loadingMessage" style="display: none; text-align: right; margin-top: 10px; font-style: italic; color: #555;">
+               <i class="fas fa-spinner fa-spin"></i> Processing...
+           </div>
+      </div>
+  </div>
+
+  <!-- Success/Error Modal -->
+  <div id="statusModal" class="modal">
+      <div class="modal-content">
+          <span class="close-modal">×</span>
+          <div class="modal-icon" id="modalIcon">
+              <i class="fas fa-check-circle"></i>
+          </div>
+          <h2 id="modalTitle">Success!</h2>
+          <p id="modalMessage">Your request has been processed successfully.</p>
+          <button id="closeModalBtn" class="btn btn-primary">
+              <i class="fas fa-check"></i> OK
+          </button>
+      </div>
+  </div>
+
+    <!-- Notification element -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Audio elements -->
+    <audio id="successSound" src="{{ url_for('static', filename='success.mp3') }}" preload="auto"></audio>
+    <audio id="errorSound" src="{{ url_for('static', filename='error.mp3') }}" preload="auto"></audio>
+    <audio id="submitSound" src="{{ url_for('static', filename='submit.mp3') }}" preload="auto"></audio>
+
+
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const form = document.getElementById('requestForm');
+          const mainSubmitBtn = document.getElementById('mainSubmitBtn');
+          const previewPdfBtn = document.getElementById('previewPdfBtn');
+          const standardApprovalBtn = document.getElementById('standardApprovalBtn');
+          const ceoApprovalBtn = document.getElementById('ceoApprovalBtn');
+          const cancelBtn = document.getElementById('cancelBtn');
+          const actionInput = document.getElementById('action');
+          const fileInput = document.getElementById('document');
+          const fileLabelText = document.getElementById('fileLabelText');
+          const loadingMessage = document.getElementById('loadingMessage');
+          const companyNameSelect = document.getElementById('companyName');
+
+
+          const statusModal = document.getElementById('statusModal');
+          const closeModal = document.querySelector('#statusModal .close-modal');
+          const closeModalBtn = document.getElementById('closeModalBtn');
+          const modalIcon = document.getElementById('modalIcon');
+          const modalTitle = document.getElementById('modalTitle');
+          const modalMessage = document.getElementById('modalMessage');
+
+          // Notification and Sound elements
+          const notificationElement = document.getElementById('notification');
+          const successSound = document.getElementById('successSound');
+          const errorSound = document.getElementById('errorSound');
+          const submitSound = document.getElementById('submitSound');
+
+
+          initFormValidation();
+          updateFileLabel(fileInput);
+
+          mainSubmitBtn.addEventListener('click', handleMainSubmitClick);
+          previewPdfBtn.addEventListener('click', handlePreviewClick);
+          standardApprovalBtn.addEventListener('click', () => handleApprovalSubmit('standard_approval'));
+          ceoApprovalBtn.addEventListener('click', () => handleApprovalSubmit('ceo_approval'));
+          cancelBtn.addEventListener('click', resetFormState);
+          fileInput.addEventListener('change', () => updateFileLabel(fileInput));
+
+          closeModal.addEventListener('click', closeStatusModal);
+          closeModalBtn.addEventListener('click', closeStatusModal);
+          window.addEventListener('click', outsideModalClick);
+
+
+
+
+          function initFormValidation() {
+              const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+              inputs.forEach(input => {
+                  input.addEventListener('input', () => validateField(input));
+                  input.addEventListener('blur', () => validateField(input));
+              });
+
+               fileInput.addEventListener('blur', () => validateField(fileInput));
+          }
+
+
+          function validateField(field) {
+              const errorElement = document.getElementById(`${field.id}Error`);
+              if (!errorElement) return true;
+
+
+              // File input required check
+              if (field.id === 'document' && field.required) {
+                   if (field.files.length === 0) {
+                       showError(errorElement, 'This field is required');
+                       return false;
+                   } else {
+                        hideError(errorElement);
+                        return true;
+                   }
+              }
+
+
+              // Email format validation
+              if (field.type === 'email' && field.value.trim() && !isValidEmail(field.value)) {
+                  showError(errorElement, 'Please enter a valid email address');
+                  return false;
+              }
+
+
+              // Quantity validation
+              if (field.id === 'quantity' && field.value.trim() && parseInt(field.value) <= 0) {
+                  showError(errorElement, 'Quantity must be greater than 0');
+                  return false;
+              } else if (field.id === 'quantity' && field.value.trim() && !/^\d+$/.test(field.value)) {
+                   showError(errorElement, 'Quantity must be a whole number');
+                   return false;
+              }
+
+
+              // Amount validation
+              if (field.id === 'amount' && field.value.trim() && parseFloat(field.value) <= 0) {
+                  showError(errorElement, 'Amount must be greater than 0');
+                  return false;
+              } else if (field.id === 'amount' && field.value.trim() && isNaN(parseFloat(field.value))) {
+                  showError(errorElement, 'Please enter a valid number for the amount');
+                  return false;
+              }
+
+
+               // Default required field check for others
+              if (field.required && !field.value.trim() && field.id !== 'document') {
+                  showError(errorElement, 'This field is required');
+                  return false;
+              }
+
+
+              hideError(errorElement);
+              return true;
+          }
+
+
+
+
+          function showError(element, message) {
+              if (element) {
+                  element.textContent = message;
+                  element.style.display = 'block';
+              }
+          }
+
+
+          function hideError(element) {
+              if (element) {
+                  element.style.display = 'none';
+              }
+          }
+
+
+          function isValidEmail(email) {
+              return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+          }
+
+
+          function validateForm() {
+              let isValid = true;
+              const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+
+
+              inputs.forEach(input => {
+                  if (!validateField(input)) {
+                      isValid = false;
+                  }
+              });
+
+
+              if (fileInput.required) {
+                   if (!validateField(fileInput)) {
+                       isValid = false;
+                   }
+              }
+
+
+              return isValid;
+          }
+
+
+
+
+          function handleMainSubmitClick() {
+              if (!validateForm()) {
+                  const firstErrorElement = form.querySelector('.error-message[style="display: block;"]');
+                  if (firstErrorElement) {
+                      firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  } else {
+                      const firstInvalidInput = form.querySelector(':invalid');
+                      if (firstInvalidInput) {
+                           firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                  }
+                  return;
+              }
+
+
+              setButtonsDisabled(true);
+              mainSubmitBtn.style.display = 'none';
+
+
+              previewPdfBtn.style.display = 'inline-flex';
+              standardApprovalBtn.style.display = 'inline-flex';
+              ceoApprovalBtn.style.display = 'inline-flex';
+              cancelBtn.style.display = 'inline-flex';
+              setButtonsDisabled(false);
+          }
+
+
+          function handlePreviewClick() {
+              actionInput.value = 'preview';
+              processFormSubmission();
+          }
+
+
+          function handleApprovalSubmit(action) {
+              actionInput.value = action;
+              processFormSubmission();
+          }
+
+
+          function setButtonsDisabled(disabled) {
+              mainSubmitBtn.disabled = disabled;
+              previewPdfBtn.disabled = disabled;
+              standardApprovalBtn.disabled = disabled;
+              ceoApprovalBtn.disabled = disabled;
+              cancelBtn.disabled = disabled;
+               const dashboardLink = document.querySelector('.btn-dashboard');
+               if (dashboardLink) {
+                   if (disabled) {
+                        dashboardLink.classList.add('btn:disabled');
+                        dashboardLink.style.pointerEvents = 'none';
+                   } else {
+                        dashboardLink.classList.remove('btn:disabled');
+                        dashboardLink.style.pointerEvents = 'auto';
+                   }
+               }
+          }
+
+
+
+
+          function processFormSubmission() {
+              setButtonsDisabled(true);
+              previewPdfBtn.style.display = 'none';
+              standardApprovalBtn.style.display = 'none';
+              ceoApprovalBtn.style.display = 'none';
+              cancelBtn.style.display = 'none';
+              loadingMessage.style.display = 'block';
+
+
+              // Play sound for submission
+              if (submitSound) submitSound.play();
+              showNotification('Submitting request...', 'info');
+
+
+              const formData = new FormData(form);
+
+
+              fetch('/submit', {
+                  method: 'POST',
+                  body: formData
+              })
+              .then(response => {
+                  if (actionInput.value === 'preview' && response.ok && response.headers.get('Content-Type') === 'application/pdf') {
+                       return response.blob().then(blob => {
+                           const url = URL.createObjectURL(blob);
+                           window.open(url, '_blank');
+                           resetFormState();
+                           return null;
+                       });
+                  }
+                  return response.json().then(data => {
+                      if (!response.ok) {
+                          if (response.status === 409) {
+                              throw new Error(data.message || 'Duplicate Request ID');
+                          }
+                          throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                      }
+                      return data;
+                  });
+              })
+              .then(data => {
+                  if (data && data.success) {
+                      showStatusModal('Success!', data.message, 'success');
+                      if (successSound) successSound.play();
+                      showNotification(data.message, 'success');
+                      form.reset();
+                      updateFileLabel(fileInput); // Reset file label after form reset
+                      resetFormState();
+                  } else if (data) {
+                       showStatusModal('Error!', data.message, 'error');
+                       if (errorSound) errorSound.play();
+                       showNotification(data.message, 'error');
+                       resetFormState();
+                  }
+              })
+              .catch(error => {
+                  console.error('Error:', error);
+                  showStatusModal('Error!', 'An error occurred: ' + error.message, 'error');
+                  if (errorSound) errorSound.play();
+                  showNotification('An error occurred: ' + error.message, 'error');
+                  resetFormState();
+              });
+          }
+
+
+          function updateFileLabel(input) {
+              if (input.files && input.files.length > 0) {
+                  const fileName = input.files[0].name;
+                  fileLabelText.textContent = fileName;
+                  fileLabelText.title = fileName;
+              } else {
+                  fileLabelText.textContent = 'Choose a file or drag it here';
+                  fileLabelText.title = '';
+              }
+          }
+
+
+          function showStatusModal(title, message, type) {
+              modalTitle.textContent = title;
+              modalMessage.textContent = message;
+              modalIcon.innerHTML = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+              modalIcon.className = 'modal-icon ' + type;
+              statusModal.style.display = 'flex';
+          }
+
+
+          function closeStatusModal() {
+              statusModal.style.display = 'none';
+          }
+
+
+          function outsideModalClick(e) {
+              if (e.target === statusModal) {
+                  closeStatusModal();
+              }
+          }
+
+
+          function resetFormState() {
+               loadingMessage.style.display = 'none';
+               mainSubmitBtn.style.display = 'inline-flex';
+               previewPdfBtn.style.display = 'none';
+               standardApprovalBtn.style.display = 'none';
+               ceoApprovalBtn.style.display = 'none';
+               cancelBtn.style.display = 'none';
+               setButtonsDisabled(false);
+               actionInput.value = '';
+               if (!form.elements['document'].value) {
+                   updateFileLabel(form.elements['document']);
+               }
+                form.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+          }
+
+
+          function showNotification(message, type = 'info', duration = 3000) {
+              notificationElement.textContent = message;
+              notificationElement.className = `notification ${type}`;
+              notificationElement.classList.add('show');
+
+
+              if (submitSound) submitSound.play();
+
+
+              setTimeout(() => {
+                  notificationElement.classList.remove('show');
+              }, duration);
+          }
+      });
+  </script>
+</body>
+</html>

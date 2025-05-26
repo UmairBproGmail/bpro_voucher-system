@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Request Dashboard</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <style>
+       /* --- Shared Styles --- */
+       :root {
+          --primary-color: #3498db;
+          --secondary-color: #2ecc71;
+          --danger-color: #e74c3c;
+          --dark-color: #2c3e50;
+          --light-color: #ecf0f1;
+          --border-color: #ddd;
+          --shadow-color: rgba(0, 0, 0, 0.1);
+          --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+
+      body {
+          font-family: var(--font-main);
+          background-color: #f5f7fa;
+          color: #333;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+      }
+
+
+      .container {
+          max-width: 1300px;
+          margin: 2rem auto;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 0 20px var(--shadow-color);
+          overflow: hidden;
+      }
+
+
+      .header {
+           padding: 2rem;
+           background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+           color: white;
+           text-align: center;
+           margin-bottom: 20px;
+      }
+      .header h1 {
+           font-size: 2rem;
+           margin: 0;
+      }
+
+
+      /* --- Dashboard Specific Styles --- */
+      .content {
+          padding: 0 2rem 2rem 2rem;
+      }
+
+
+      .top-links {
+           text-align: center;
+           margin-bottom: 20px;
+           padding-bottom: 15px;
+           border-bottom: 1px solid var(--light-color);
+      }
+      .top-links a {
+          margin: 0 15px;
+          color: var(--dark-color);
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.3s ease;
+      }
+      .top-links a:hover {
+          color: var(--primary-color);
+          text-decoration: underline;
+      }
+      .top-links i {
+           margin-right: 5px;
+           color: #7f8c8d;
+      }
+       .top-links a:hover i {
+           color: var(--primary-color);
+      }
+
+
+       /* --- Table Styles --- */
+       .table-responsive {
+           overflow-x: auto;
+       }
+
+
+      table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+          min-width: 900px;
+      }
+      th, td {
+          border: 1px solid var(--border-color);
+          padding: 10px 12px;
+          text-align: left;
+          vertical-align: top;
+          font-size: 0.9rem;
+      }
+      th {
+          background-color: var(--light-color);
+          font-weight: 600;
+          color: var(--dark-color);
+          position: sticky;
+          top: 0;
+          z-index: 1;
+      }
+       tr:nth-child(even) {
+           background-color: #f9fafb;
+       }
+        tr:hover {
+           background-color: #eef;
+        }
+
+
+       /* --- Status Styling --- */
+      .status-pending-standard-approval { color: #f39c12; font-weight: bold; }
+      .status-pending-ceo-approval { color: #e67e22; font-weight: bold; }
+      .status-approved-by-standard { color: #2ecc71; font-weight: bold; }
+      .status-approved-by-ceo { color: #27ae60; font-weight: bold; }
+      .status-rejected-by-standard,
+      .status-rejected-by-ceo { color: var(--danger-color); font-weight: bold; }
+      .status-submitted { color: #3498db; font-weight: bold; }
+
+
+       /* --- Document Link Styling --- */
+        .document-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            font-size: 0.85rem;
+        }
+         .document-link:hover {
+            color: var(--dark-color);
+            text-decoration: underline;
+         }
+        .document-link .link-icon { margin-right: 4px; font-size: 0.9em; }
+
+
+      .no-requests {
+           text-align: center;
+           margin-top: 30px;
+           padding: 20px;
+           background-color: #fff;
+           border: 1px dashed var(--border-color);
+           border-radius: 8px;
+           color: #777;
+           font-style: italic;
+      }
+
+
+       /* --- PDF Preview Modal & Voucher Edit Modal --- */
+       .modal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.7);
+          justify-content: center;
+          align-items: center;
+          overflow: auto;
+       }
+
+
+      .modal-content {
+          background-color: white;
+          margin: auto;
+          padding: 20px;
+          border-radius: 8px;
+          position: relative;
+          box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+          display: flex;
+          flex-direction: column;
+      }
+
+
+      .modal-content.pdf-preview {
+          max-width: 85%;
+          max-height: 90vh;
+          overflow: hidden;
+      }
+
+
+      .modal-content.voucher-edit {
+          width: 90%;
+          max-width: 850px;
+          height: 90vh;
+          overflow-y: auto;
+          padding: 0;
+      }
+
+
+      .modal-header {
+          padding: 15px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+
+      .modal-title {
+          margin: 0;
+          font-size: 1.2rem;
+          color: #333;
+      }
+
+
+      .modal-content iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          flex-grow: 1;
+      }
+
+
+      .close-modal {
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #aaa;
+          background: none;
+          border: none;
+          padding: 0 10px;
+      }
+
+
+      .close-modal:hover {
+          color: #555;
+      }
+
+
+       /* --- Voucher Button Styles --- */
+       .voucher-actions {
+           display: flex;
+           gap: 5px;
+           align-items: center;
+           flex-wrap: wrap; /* Allow buttons to wrap */
+       }
+
+
+       .btn-voucher {
+           background-color: var(--secondary-color);
+           color: white;
+           border: none;
+           padding: 6px 10px;
+           border-radius: 4px;
+           cursor: pointer;
+           font-size: 0.85rem;
+           transition: background-color 0.3s ease;
+           display: inline-flex;
+           align-items: center;
+           white-space: nowrap;
+       }
+       .btn-voucher:hover:not(.disabled) {
+           background-color: #27ae60;
+       }
+       .btn-voucher.disabled {
+           background-color: #bdc3c7;
+           cursor: not-allowed;
+       }
+       .btn-voucher.loading i.fa-spinner {
+           animation: spin 1s linear infinite;
+       }
+       .btn-voucher-approve {
+           background-color: #1a73e8; /* Google blue */
+           color: white;
+       }
+       .btn-voucher-approve:hover {
+           background-color: #155bb1;
+       }
+       .btn-voucher-reject {
+           background-color: #db4437; /* Google red */
+           color: white;
+       }
+       .btn-voucher-reject:hover {
+           background-color: #b83329;
+       }
+
+
+       .btn-close-voucher {
+           background-color: var(--danger-color);
+           color: white;
+           border: none;
+           padding: 6px 10px;
+           border-radius: 4px;
+           cursor: pointer;
+           font-size: 0.85rem;
+           transition: background-color 0.3s ease;
+           display: none; /* Initially hidden */
+           align-items: center;
+       }
+
+
+       .btn-close-voucher:hover {
+           background-color: #c0392b;
+       }
+
+
+       .btn-close-voucher i {
+           margin-right: 4px;
+           font-size: 0.9em;
+       }
+
+
+       @keyframes spin {
+           0% { transform: rotate(0deg); }
+           100% { transform: rotate(360deg); }
+       }
+
+
+       .voucher-link {
+           color: var(--primary-color);
+           text-decoration: none;
+           display: inline-flex;
+           align-items: center;
+           cursor: pointer;
+           transition: color 0.2s ease;
+           font-size: 0.85rem;
+           white-space: nowrap;
+           margin-bottom: 5px; /* Add margin for vertical stacking */
+       }
+       .voucher-link:hover {
+           color: var(--dark-color);
+           text-decoration: underline;
+       }
+       .voucher-link .link-icon {
+           margin-right: 4px;
+           font-size: 0.9em;
+       }
+       .notification {
+           position: fixed;
+           bottom: 20px;
+           right: 20px;
+           padding: 15px 20px;
+           border-radius: 5px;
+           color: white;
+           box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+           z-index: 2000;
+           transition: opacity 0.3s ease, transform 0.3s ease;
+           opacity: 0;
+           transform: translateY(20px);
+       }
+       .notification.show {
+           opacity: 1;
+           transform: translateY(0);
+       }
+       .notification.success { background-color: var(--secondary-color); }
+       .notification.error { background-color: var(--danger-color); }
+       .notification.info { background-color: var(--primary-color); }
+
+       /* Voucher Status for Dashboard */
+        .voucher-status-approved { color: #27ae60; font-weight: bold; }
+        .voucher-status-rejected { color: #e74c3c; font-weight: bold; }
+        .voucher-status-pending { color: #f39c12; font-weight: normal; }
+
+
+       @media (max-width: 768px) {
+           .container { padding: 10px; }
+           .header { padding: 1rem; }
+           .header h1 { font-size: 1.5rem; }
+           .content { padding: 0 10px 10px 10px; }
+           .top-links { flex-wrap: wrap; justify-content: center; gap: 10px 15px; }
+           .top-links a { margin: 0; }
+           th, td { padding: 6px 8px; font-size: 0.8rem; }
+           .modal-content.pdf-preview, .modal-content.voucher-edit { max-width: 95%; max-height: 95vh; padding: 5px; }
+           .close-modal { font-size: 1.2rem; }
+           .btn-voucher, .voucher-link, .btn-close-voucher { font-size: 0.75rem; padding: 5px 8px; }
+           .voucher-actions { gap: 3px; }
+       }
+   </style>
+</head>
+<body>
+   <div class="container">
+       <div class="header">
+           <h1><i class="fas fa-chart-line"></i> Request Dashboard</h1>
+       </div>
+
+
+       <div class="content">
+           <div class="top-links">
+                <a href="{{ url_for('index') }}"><i class="fas fa-file-alt"></i> Submit New Request</a>
+                <a href="{{ url_for('standard_login') }}"><i class="fas fa-user-check"></i> Standard Approval Queue</a>
+                <a href="{{ url_for('ceo_login') }}"><i class="fas fa-user-tie"></i> CEO Approval Queue</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+           </div>
+
+
+           {% if requests %}
+           <div class="table-responsive">
+               <table>
+                   <thead>
+                       <tr>
+                           <th>Date</th>
+                           <th>Request ID</th>
+                           <th>Company</th> {# New Header #}
+                           <th>Name</th>
+                           <th>Description</th>
+                           <th>Amount</th>
+                           <th>Status</th>
+                           <th>Approval Type</th>
+                           <th>Request PDF</th>
+                           <th>Voucher</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                       {% for req in requests %}
+                       <tr data-request-id="{{ req.get('Request ID') }}">
+                           <td>{{ req.get('Timestamp', 'N/A').split(' ')[0] if req.get('Timestamp') else 'N/A' }}</td> {# Fixed Date: Show only date part #}
+                           <td>{{ req.get('Request ID', 'N/A') }}</td>
+                           <td>{{ req.get('Company Name', 'N/A') }}</td> {# New Column #}
+                           <td>{{ req.get('Name', 'N/A') }}</td>
+                           <td>{{ req.get('Description', 'N/A') | truncate(40, True) }}</td>
+                           <td>{{ req.get('Amount', 'N/A') }} {{ req.get('Currency', '') }}</td>
+                           <td class="status-{{ req.get('Status', '').lower().replace(' ', '-').replace('approved-by', 'approved-by').replace('rejected-by', 'rejected-by') }}">
+                               {{ req.get('Status', 'N/A') }}
+                                {% if req.get('Approval Date') %}
+                                   <br><small>({{ req['Approval Date'].split(' ')[0] }})</small> {# Fixed Date: Show only date part #}
+                                {% endif %}
+                                {% if req.get('Rejection Reason') %}
+                                   <br><small title="{{ req['Rejection Reason'] }}">Reason: {{ req['Rejection Reason'].split(': ', 1)[-1] | truncate(25, True) }}</small>
+                                {% endif %}
+                           </td>
+                            <td>{{ req.get('Approval Type', 'N/A') }}</td>
+                           <td>
+                                {% if req.get('Request PDF Link') and req['Request PDF Link'] != 'Error generating PDF' and 'drive.google.com' in req['Request PDF Link'] %}
+                                   <a href="#" class="document-link preview-pdf" data-pdf-url="{{ req['Request PDF Link'] }}" title="View Request PDF"><i class="fas fa-file-pdf link-icon"></i>View PDF</a>
+                               {% elif req.get('Request PDF Link') and req['Request PDF Link'] != 'Error generating PDF' %}
+                                   a href="{{ req['Request PDF Link'] }}" target="_blank" class="document-link" title="Open Request PDF">
+        <i class="fas fa-file-pdf link-icon"></i>Open PDF
+    </a>
+{% elif req.get('Request PDF Link') and req['Request PDF Link'] != 'Error generating PDF' %}
+    <a href="{{ req['Request PDF Link'] }}" target="_blank" class="document-link" title="Open Request PDF">
+        <i class="fas fa-external-link-alt link-icon"></i>Open PDF
+    </a>
+{% else %}
+    No PDF
+{% endif %}
+<br>
+{# For Supporting Document Link #}
+{% if req.get('Supporting Document Link') and req['Supporting Document Link'] != 'No attachment' and 'drive.google.com' in req['Supporting Document Link'] %}
+    <a href="{{ req['Supporting Document Link'] }}" target="_blank" class="document-link" title="Open Attachment">
+        <i class="fas fa-paperclip link-icon"></i>Attachment
+    </a>
+{% elif req.get('Supporting Document Link') and req['Supporting Document Link'] != 'No attachment' %}
+    <a href="{{ req['Supporting Document Link'] }}" target="_blank" class="document-link" title="Open Attachment">
+        <i class="fas fa-external-link-alt link-icon"></i>Attachment
+    </a>
+{% else %}
+    <!-- No Attachment -->
+{% endif %}
+                           </td>
+                           <td data-voucher-cell-for="{{ req['Request ID'] }}">
+                               {% if req.get('Status', '').startswith('Approved by') %}
+                                   {% if req.get('Voucher PDF Link') %}
+                                       <a href="{{ req['Voucher PDF Link'] }}" class="voucher-link" target="_blank">
+                                           <i class="fas fa-file-invoice-dollar link-icon"></i>View Voucher
+                                       </a>
+                                       <br>
+                                       {# Display Voucher Approval Status #}
+                                       {% if req.get('Voucher Approved By') %}
+                                            {% if req['Voucher Approved By'].startswith('Approved by') %}
+                                            <span class="voucher-status-approved" title="{{ req['Voucher Approved By'] }}">Approved</span>
+                                            {% elif req['Voucher Approved By'].startswith('Rejected by') %}
+                                            <span class="voucher-status-rejected" title="{{ req['Voucher Rejection Reason'] }}">Rejected</span>
+                                            {% else %}
+                                            {# Fallback for other statuses, e.g., if just "Generated" is there #}
+                                            <span class="voucher-status-pending">Generated</span>
+                                            {% endif %}
+                                       {% else %}
+                                            {# Show Approve/Reject buttons if no final decision on voucher yet #}
+                                            <div class="voucher-actions">
+                                                <button class="btn-voucher btn-voucher-approve" data-request-id="{{ req['Request ID'] }}" data-action="approve_voucher">
+                                                    <i class="fas fa-check"></i> Approve Voucher
+                                                </button>
+                                                <button class="btn-voucher btn-voucher-reject" data-request-id="{{ req['Request ID'] }}" data-action="reject_voucher">
+                                                    <i class="fas fa-times"></i> Reject Voucher
+                                                </button>
+                                            </div>
+                                       {% endif %}
+                                   {% else %}
+                                       {# Show Generate Voucher button if no voucher link yet #}
+                                       <div class="voucher-actions">
+                                           <button class="btn-voucher" data-request-id="{{ req['Request ID'] }}"
+                                                   data-original-pdf-link="{{ req['Request PDF Link'] }}">
+                                               <i class="fas fa-file-invoice-dollar"></i> Generate Voucher
+                                           </button>
+                                           {# Removed btn-close-voucher here as it's only relevant when modal is open #}
+                                       </div>
+                                   {% endif %}
+                               {% else %}
+                                   {# Show disabled Generate Voucher if request not yet approved #}
+                                   <button class="btn-voucher disabled" disabled>
+                                       <i class="fas fa-file-invoice-dollar"></i> Generate Voucher
+                                   </button>
+                               {% endif %}
+                           </td>
+                       </tr>
+                       {% endfor %}
+                   </tbody>
+               </table>
+           </div>
+           {% else %}
+           <p class="no-requests">No requests found in the sheet.</p>
+           {% endif %}
+       </div>
+   </div>
+
+
+    <!-- PDF Preview Modal -->
+   <div id="pdfPreviewModal" class="modal">
+      <div class="modal-content pdf-preview">
+          <button class="close-modal">×</button>
+          <iframe id="pdfViewer" src="" frameborder="0"></iframe>
+      </div>
+   </div>
+
+    <!-- Voucher Edit Modal -->
+    <div id="voucherEditModal" class="modal">
+        <!-- Content will be injected by JavaScript -->
+        {# This modal is created and injected by JS in the script below #}
+    </div>
+
+    <!-- Rejection Reason Modal for VOUCHERS -->
+    <div id="voucherRejectionModal" class="modal">
+       <div class="modal-content">
+           <span class="close-modal">×</span>
+           <h2>Reason for Voucher Rejection</h2>
+           <label for="voucherRejectionReason">Please provide a reason:</label>
+           <textarea id="voucherRejectionReason"></textarea>
+            <div class="btn-group">
+                <button id="confirmVoucherRejectBtn" class="btn btn-reject">Submit Rejection</button>
+           </div>
+       </div>
+    </div>
+
+
+    <!-- Notification element -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Audio elements (Ensure these paths are correct, place .mp3 files in a 'static' folder) -->
+    <audio id="successSound" src="{{ url_for('static', filename='success.mp3') }}" preload="auto"></audio>
+    <audio id="errorSound" src="{{ url_for('static', filename='error.mp3') }}" preload="auto"></audio>
+    <audio id="notificationSound" src="{{ url_for('static', filename='notification.mp3') }}" preload="auto"></audio>
+
+
+   <script>
+       document.addEventListener('DOMContentLoaded', function() {
+    // ... (existing code)
+
+    const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const closePdfModal = document.querySelector('#pdfPreviewModal .close-modal');
+    const dashboardTableBody = document.querySelector('.table-responsive table tbody');
+    const notificationElement = document.getElementById('notification');
+    const successSound = document.getElementById('successSound');
+    const errorSound = document.getElementById('errorSound');
+    const notificationSound = document.getElementById('notificationSound');
+
+    const voucherRejectionModal = document.getElementById('voucherRejectionModal');
+    const voucherRejectionModalCloseBtn = document.querySelector('#voucherRejectionModal .close-modal');
+    const confirmVoucherRejectBtn = document.getElementById('confirmVoucherRejectBtn');
+    const voucherRejectionReasonTextarea = document.getElementById('voucherRejectionReason');
+    let currentRequestIdToVoucherReject = null;
+
+    window.voucherMessageListenerAttached = false;
+
+    // --- New: Create voucherEditModal once and attach a delegated listener ---
+    let voucherEditModal = document.getElementById('voucherEditModal');
+    if (!voucherEditModal) {
+        voucherEditModal = document.createElement('div');
+        voucherEditModal.id = 'voucherEditModal';
+        voucherEditModal.className = 'modal';
+        document.body.appendChild(voucherEditModal);
+    }
+
+    // Attach a single delegated event listener to the voucherEditModal
+    // This listener will capture clicks within the modal
+    voucherEditModal.addEventListener('click', function(event) {
+        // Check if the clicked element (or its closest ancestor) has the class 'close-modal'
+        const clickedCloseButton = event.target.closest('.close-modal');
+        if (clickedCloseButton) {
+            event.preventDefault();
+            console.log("Delegated Voucher Edit Modal Close Button Clicked!");
+            closeVoucherEditModal();
+        }
+    });
+    // --- End New Delegated Listener ---
+
+    if (dashboardTableBody) {
+        dashboardTableBody.addEventListener('click', function(event) {
+            console.log("--- Click Event Detected on dashboardTableBody ---");
+            console.log("Target Element:", event.target);
+
+            const link = event.target.closest('.document-link');
+            if (link) {
+                console.log("Document link clicked.");
+                event.preventDefault();
+                const pdfUrl = link.dataset.pdfUrl;
+                if (pdfUrl) {
+                    let embedUrl = pdfUrl;
+                    const gDriveMatch = pdfUrl.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+                    if (gDriveMatch && gDriveMatch[1]) {
+                        embedUrl = `https://drive.google.com/file/d/${gDriveMatch[1]}/preview`;
+                    } else {
+                        embedUrl = pdfUrl.includes('?') ? pdfUrl + '&embedded=true' : pdfUrl + '?embedded=true';
+                    }
+                    pdfViewer.src = embedUrl;
+                    pdfPreviewModal.style.display = 'flex';
+                }
+            }
+
+            const generateVoucherBtn = event.target.closest('.btn-voucher:not(.disabled):not([data-action])');
+            console.log("Found generateVoucherBtn (or null):", generateVoucherBtn);
+
+            if (generateVoucherBtn) {
+                console.log('Generate Voucher button matched the selector!');
+                event.preventDefault();
+                const requestId = generateVoucherBtn.dataset.requestId;
+                openVoucherEditModal(requestId, generateVoucherBtn);
+            } else {
+                console.log("Generate Voucher button selector did NOT match.");
+            }
+
+            const voucherActionButton = event.target.closest('.btn-voucher[data-action]');
+            if (voucherActionButton) {
+                console.log("Voucher action button (Approve/Reject) clicked.");
+                const requestId = voucherActionButton.dataset.requestId;
+                const action = voucherActionButton.dataset.action;
+                if (action === 'approve_voucher') {
+                    if (confirm('Are you sure you want to APPROVE this voucher? This action is irreversible.')) {
+                        handleVoucherAction(requestId, action, voucherActionButton);
+                    }
+                } else if (action === 'reject_voucher') {
+                    currentRequestIdToVoucherReject = requestId;
+                    voucherRejectionReasonTextarea.value = '';
+                    voucherRejectionModal.style.display = 'flex';
+                }
+            }
+            console.log("--- End Click Event Trace ---");
+        });
+    }
+
+    if(closePdfModal) {
+        closePdfModal.addEventListener('click', closePdfPreviewModal);
+    }
+
+    // This handles clicks outside the modal
+    window.addEventListener('click', function(event) {
+        if (event.target === pdfPreviewModal) {
+            closePdfPreviewModal();
+        }
+        // Removed voucherEditModal click handler here, as it's now handled by the delegated listener on voucherEditModal itself.
+        // The click-outside-modal for voucherEditModal should be specifically coded if desired,
+        // to avoid conflicts with iframe's content clicks.
+        if (event.target === voucherRejectionModal) {
+            closeVoucherRejectionModal();
+        }
+    });
+
+    voucherRejectionModalCloseBtn.addEventListener('click', closeVoucherRejectionModal);
+    confirmVoucherRejectBtn.addEventListener('click', function() {
+        const reason = voucherRejectionReasonTextarea.value.trim();
+        if (reason) {
+            const originalRejectButton = document.querySelector(`.btn-voucher-reject[data-request-id="${currentRequestIdToVoucherReject}"]`);
+            handleVoucherAction(currentRequestIdToVoucherReject, 'reject_voucher', originalRejectButton, reason);
+            closeVoucherRejectionModal();
+        } else {
+            alert('Please provide a reason for rejection.');
+        }
+    });
+
+
+    function closePdfPreviewModal() {
+        if(pdfPreviewModal) pdfPreviewModal.style.display = 'none';
+        if(pdfViewer) pdfViewer.src = '';
+    }
+
+    function openVoucherEditModal(requestId, buttonElement) {
+        // We know voucherEditModal element exists due to the setup above
+        // We ensure its inner HTML is fresh every time it's opened.
+        voucherEditModal.innerHTML = `
+            <div class="modal-content voucher-edit">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Voucher (ID: ${requestId})</h3>
+                    <button class="close-modal">×</button>
+                </div>
+                <iframe id="voucherEditFrame" frameborder="0"></iframe>
+            </div>
+        `;
+
+        // The delegated listener on voucherEditModal (attached in DOMContentLoaded) will handle its close button clicks.
+        // No need to re-attach specific listener here.
+
+        if (!window.voucherMessageListenerAttached) {
+            window.addEventListener('message', handleVoucherMessage);
+            window.voucherMessageListenerAttached = true;
+        }
+
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        buttonElement.disabled = true;
+
+        const iframe = voucherEditModal.querySelector('#voucherEditFrame');
+
+        iframe.onload = function() {
+            buttonElement.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Generate Voucher';
+            buttonElement.disabled = false;
+            voucherEditModal.style.display = 'flex'; // Show the modal
+        };
+
+        iframe.onerror = function() {
+            buttonElement.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Generate Voucher';
+            buttonElement.disabled = false;
+            showNotification('Error loading voucher edit form.', 'error');
+            if (errorSound) errorSound.play();
+            closeVoucherEditModal();
+        };
+
+        iframe.src = `/edit_voucher_details/${requestId}`;
+    }
+
+    function closeVoucherEditModal() {
+        // The 'modal' variable here is voucherEditModal from the outer scope
+        if (voucherEditModal) {
+            const iframe = voucherEditModal.querySelector('#voucherEditFrame');
+            if (iframe) {
+                iframe.src = 'about:blank';
+            }
+            voucherEditModal.style.display = 'none';
+        }
+    }
+
+    function handleVoucherMessage(event) {
+        // IMPORTANT: In production, verify event.origin for security
+        if (event.data && event.data.type === 'voucherGenerated') {
+            closeVoucherEditModal();
+
+            const voucherCell = document.querySelector(`td[data-voucher-cell-for="${event.data.requestId}"]`);
+            if (voucherCell) {
+                voucherCell.innerHTML = `
+                    <a href="${event.data.voucherUrl}" class="voucher-link" target="_blank">
+                        <i class="fas fa-file-invoice-dollar link-icon"></i>View Voucher
+                    </a>
+                    <br>
+                    <div class="voucher-actions">
+                        <button class="btn-voucher btn-voucher-approve" data-request-id="${event.data.requestId}" data-action="approve_voucher">
+                            <i class="fas fa-check"></i> Approve Voucher
+                        </button>
+                        <button class="btn-voucher btn-voucher-reject" data-request-id="${event.data.requestId}" data-action="reject_voucher">
+                            <i class="fas fa-times"></i> Reject Voucher
+                        </button>
+                    </div>
+                `;
+            }
+            showNotification('Voucher generated successfully!', 'success');
+            if (successSound) successSound.play();
+        } else if (event.data && event.data.type === 'voucherGenerationFailed') {
+            showNotification('Voucher generation failed: ' + (event.data.message || "Please check the details"), 'error');
+            if (errorSound) errorSound.play();
+
+            const originalButton = document.querySelector(`.btn-voucher[data-request-id="${event.data.requestId}"]`);
+            if(originalButton) {
+                originalButton.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Generate Voucher';
+                originalButton.disabled = false;
+            }
+        }
+    }
+
+    function handleVoucherAction(requestId, action, buttonElement, reason = null) {
+        const row = buttonElement.closest('tr');
+        if (row) {
+            row.querySelectorAll('.voucher-actions button').forEach(btn => btn.disabled = true);
+        }
+
+        const url = action === 'approve_voucher' ? `/approve_voucher/${requestId}` : `/reject_voucher/${requestId}`;
+        const method = 'POST';
+        const body = action === 'reject_voucher' ? new URLSearchParams({ reason: reason }) : null;
+        const headers = {
+            'Content-Type': action === 'reject_voucher' ? 'application/x-www-form-urlencoded' : 'application/json'
+        };
+
+        fetch(url, { method, headers, body })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    if (successSound) successSound.play();
+                    const voucherActionsContainer = buttonElement.closest('.voucher-actions');
+                    if (voucherActionsContainer) {
+                        voucherActionsContainer.innerHTML = action === 'approve_voucher' ?
+                            `<span class="voucher-status-approved" title="${data.message}">Approved</span>` :
+                            `<span class="voucher-status-rejected" title="${reason}">Rejected</span>`;
+                    }
+                } else {
+                    showNotification('Error: ' + data.message, 'error');
+                    if (errorSound) errorSound.play();
+                    if (row) {
+                        row.querySelectorAll('.voucher-actions button').forEach(btn => btn.disabled = false);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred: ' + error.message, 'error');
+                if (errorSound) errorSound.play();
+                if (row) {
+                    row.querySelectorAll('.voucher-actions button').forEach(btn => btn.disabled = false);
+                }
+            });
+    }
+
+    function showNotification(message, type = 'info', duration = 3000) {
+        notificationElement.textContent = message;
+        notificationElement.className = `notification ${type}`;
+        notificationElement.classList.add('show');
+
+        if (notificationSound) notificationSound.play();
+
+        setTimeout(() => {
+            notificationElement.classList.remove('show');
+        }, duration);
+    }
+
+    function closeVoucherRejectionModal() {
+        voucherRejectionModal.style.display = 'none';
+        currentRequestIdToVoucherReject = null;
+        voucherRejectionReasonTextarea.value = '';
+    }
+});
+</script>
+</body>
+</html>

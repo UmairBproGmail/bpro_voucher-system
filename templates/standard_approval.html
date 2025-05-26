@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Standard Approval Queue</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <style>
+       /* --- Shared Styles (Copied from Form) --- */
+       :root {
+          --primary-color: #3498db;
+          --secondary-color: #2ecc71;
+          --danger-color: #e74c3c;
+          --dark-color: #2c3e50;
+          --light-color: #ecf0f1;
+          --border-color: #ddd;
+          --shadow-color: rgba(0, 0, 0, 0.1);
+          --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+
+      body {
+          font-family: var(--font-main);
+          background-color: #f5f7fa;
+          color: #333;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+      }
+
+
+      .container {
+          max-width: 1200px; /* Wider container for table */
+          margin: 2rem auto;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 0 20px var(--shadow-color);
+          overflow: hidden;
+      }
+
+
+      .header {
+           padding: 2rem;
+           background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+           color: white;
+           text-align: center;
+           margin-bottom: 20px; /* Space below header */
+      }
+      .header h1 {
+           font-size: 2rem;
+           margin: 0;
+      }
+
+
+       /* --- Portal Specific Styles --- */
+       .content {
+          padding: 0 2rem 2rem 2rem; /* Padding around content */
+      }
+
+
+      .top-links {
+           text-align: center;
+           margin-bottom: 20px;
+           padding-bottom: 15px;
+           border-bottom: 1px solid var(--light-color);
+      }
+      .top-links a {
+          margin: 0 15px;
+          color: var(--dark-color);
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.3s ease;
+      }
+      .top-links a:hover {
+          color: var(--primary-color);
+          text-decoration: underline;
+      }
+      .top-links i {
+           margin-right: 5px;
+           color: #7f8c8d; /* Icon color */
+      }
+       .top-links a:hover i {
+           color: var(--primary-color);
+      }
+
+
+      /* --- Table Styles --- */
+       .table-responsive {
+           overflow-x: auto; /* Make table scroll horizontally on small screens */
+       }
+
+
+      table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+           min-width: 700px; /* Ensure minimum width for responsiveness */
+      }
+      th, td {
+          border: 1px solid var(--border-color);
+          padding: 12px; /* More padding */
+          text-align: left;
+          vertical-align: top; /* Align content to top */
+      }
+      th {
+          background-color: var(--light-color); /* Use light color for header */
+          font-weight: 600;
+          color: var(--dark-color);
+          position: sticky; /* Make header sticky */
+          top: 0;
+          z-index: 1; /* Ensure header is above content when scrolling */
+      }
+      tr:nth-child(even) {
+           background-color: #f9fafb; /* Slightly different stripe color */
+       }
+        tr:hover {
+           background-color: #eef; /* Highlight on hover */
+        }
+
+
+      .no-requests {
+           text-align: center;
+           margin-top: 30px;
+           padding: 20px;
+           background-color: #fff;
+           border: 1px dashed var(--border-color);
+           border-radius: 8px;
+           color: #777;
+           font-style: italic;
+      }
+
+
+      /* --- Action Buttons Styling (Copied from Form) --- */
+       .action-buttons button {
+          padding: 0.6rem 1rem; /* Smaller padding for table buttons */
+          border: none;
+          border-radius: 6px;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: background-color 0.3s ease;
+          margin-right: 5px; /* Space between buttons */
+          margin-bottom: 5px; /* Space if they wrap */
+       }
+
+
+      .btn-approve {
+          background-color: var(--secondary-color);
+          color: white;
+      }
+       .btn-approve:hover {
+           background-color: #229954;
+       }
+
+
+      .btn-reject {
+          background-color: var(--danger-color);
+          color: white;
+      }
+       .btn-reject:hover {
+           background-color: #c0392b;
+       }
+        .action-buttons button:disabled {
+           opacity: 0.6;
+           cursor: not-allowed;
+        }
+
+
+       .link-icon { margin-right: 5px; } /* For View PDF/Attachment links */
+        .document-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+            margin-bottom: 5px;
+            transition: color 0.2s ease;
+        }
+         .document-links a:hover {
+            color: var(--dark-color);
+            text-decoration: underline;
+         }
+        .document-links .link-icon { margin-right: 5px; }
+
+
+       /* --- Modal for Rejection Reason (Copied from Form) --- */
+       .modal {
+          display: none;
+          position: fixed;
+          z-index: 1000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+       }
+      .modal-content {
+          background-color: white;
+          margin: auto;
+          padding: 2rem; /* Increased padding */
+          border-radius: 10px; /* Rounded corners */
+          max-width: 500px; /* Wider modal */
+          position: relative;
+          text-align: left;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+       .modal-content h2 {
+            margin-top: 0;
+            color: var(--dark-color);
+            border-bottom: 1px solid var(--light-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+       }
+       .modal-content label {
+           display: block;
+           margin-bottom: 8px; /* More space below label */
+           font-weight: 600;
+           color: var(--dark-color);
+       }
+       .modal-content textarea {
+           width: 100%;
+           height: 120px; /* Taller textarea */
+           margin-bottom: 15px;
+           padding: 10px;
+           border: 1px solid var(--border-color);
+           border-radius: 6px;
+           box-sizing: border-box;
+           font-family: var(--font-main); /* Consistent font */
+           font-size: 0.95rem;
+           resize: vertical; /* Allow vertical resize */
+       }
+       .modal-content .btn-group {
+           text-align: right;
+       }
+       .modal-content .btn {
+           padding: 0.8rem 1.5rem; /* Use main button padding */
+           border: none;
+           border-radius: 6px;
+           font-weight: 600;
+           cursor: pointer;
+           display: inline-flex;
+           align-items: center;
+           gap: 0.5rem;
+           transition: background-color 0.3s ease;
+       }
+
+
+       .close-modal {
+          position: absolute;
+          top: 15px; /* Adjust position */
+          right: 15px; /* Adjust position */
+          font-size: 1.5rem; /* Larger close button */
+          cursor: pointer;
+          color: #888;
+       }
+        .close-modal:hover {
+           color: #555;
+        }
+
+       /* Notification styles */
+       .notification {
+           position: fixed;
+           bottom: 20px;
+           right: 20px;
+           padding: 15px 20px;
+           border-radius: 5px;
+           color: white;
+           box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+           z-index: 2000;
+           transition: opacity 0.3s ease, transform 0.3s ease;
+           opacity: 0;
+           transform: translateY(20px);
+       }
+       .notification.show {
+           opacity: 1;
+           transform: translateY(0);
+       }
+       .notification.success { background-color: var(--secondary-color); }
+       .notification.error { background-color: var(--danger-color); }
+       .notification.info { background-color: var(--primary-color); }
+
+
+        @media (max-width: 768px) {
+           .container {
+               padding: 10px;
+           }
+            .header {
+               padding: 1rem;
+            }
+           .header h1 {
+                font-size: 1.5rem;
+           }
+           .content {
+               padding: 0 10px 10px 10px;
+           }
+           .top-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px 15px; /* Row gap, Column gap */
+           }
+           .top-links a {
+                margin: 0; /* Remove explicit margin */
+           }
+            th, td {
+               padding: 8px; /* Reduce padding on small screens */
+            }
+             .action-buttons button {
+               padding: 0.5rem 0.8rem; /* Smaller buttons on small screens */
+               gap: 0.3rem;
+             }
+             .action-buttons button i {
+                margin-right: 0; /* Remove space next to icon if button too small */
+             }
+             .document-links a {
+                margin-bottom: 3px;
+             }
+             .modal-content {
+                padding: 1rem;
+             }
+             .modal-content h2 {
+                font-size: 1.3rem;
+             }
+             .modal-content textarea {
+                height: 100px;
+                padding: 8px;
+             }
+              .modal-content .btn {
+                 padding: 0.6rem 1rem;
+              }
+        }
+
+
+   </style>
+</head>
+<body>
+   <div class="container">
+       <div class="header">
+            <h1><i class="fas fa-user-check"></i> Standard Approval Queue</h1>
+       </div>
+
+
+       <div class="content">
+           <div class="top-links">
+                <a href="{{ url_for('index') }}"><i class="fas fa-file-alt"></i> Submit New Request</a>
+                <a href="{{ url_for('dashboard_login') }}"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="{{ url_for('ceo_login') }}"><i class="fas fa-user-tie"></i> CEO Approval Queue</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+           </div>
+
+
+           {% if requests %}
+           <div class="table-responsive">
+               <table>
+                   <thead>
+                       <tr>
+                           <th>Date</th>
+                           <th>Request ID</th>
+                           <th>Company</th> {# New Header #}
+                           <th>Name</th>
+                           <th>Description</th>
+                           <th>Amount</th>
+                           <th>Documents</th>
+                           <th>Actions</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                       {% for req in requests %}
+                       <tr data-request-id="{{ req.get('Request ID') }}">
+                           <td>{{ req.get('Timestamp', 'N/A').split(' ')[0] if req.get('Timestamp') else 'N/A' }}</td> {# Fixed Date #}
+                           <td>{{ req.get('Request ID', 'N/A') }}</td>
+                           <td>{{ req.get('Company Name', 'N/A') }}</td> {# New Column #}
+                           <td>{{ req.get('Name', 'N/A') }}</td>
+                           <td>{{ req.get('Description', 'N/A') | truncate(50, True) }}</td>
+                           <td>{{ req.get('Amount', 'N/A') }} {{ req.get('Currency', '') }}</td>
+                           <td class="document-links">
+                                {% if req.get('Request PDF Link') and req['Request PDF Link'] != 'Error generating PDF' %}
+                                   <a href="{{ req['Request PDF Link'] }}" target="_blank" title="View Request PDF"><i class="fas fa-file-pdf link-icon"></i>View PDF</a><br>
+                               {% else %}
+                                   No PDF<br>
+                               {% endif %}
+                                {% if req.get('Supporting Document Link') and req['Supporting Document Link'] != 'No attachment' %}
+                               <a href="{{ req['Supporting Document Link'] }}" target="_blank" title="View Supporting Document"><i class="fas fa-paperclip link-icon"></i>Attachment</a>
+                               {% else %}
+                                   No attachment
+                               {% endif %}
+                           </td>
+                           <td class="action-buttons">
+                               <button class="btn-approve" data-request-id="{{ req.get('Request ID') }}"><i class="fas fa-check"></i> Approve</button>
+                               <button class="btn-reject" data-request-id="{{ req.get('Request ID') }}"><i class="fas fa-times"></i> Reject</button>
+                           </td>
+                       </tr>
+                       {% endfor %}
+                   </tbody>
+               </table>
+           </div>
+           {% else %}
+           <p class="no-requests">No requests pending Standard Approval.</p>
+           {% endif %}
+       </div>
+   </div>
+
+
+    <!-- Rejection Reason Modal -->
+   <div id="rejectionModal" class="modal">
+       <div class="modal-content">
+           <span class="close-modal">×</span>
+           <h2>Reason for Rejection</h2>
+           <label for="rejectionReason">Please provide a reason:</label>
+           <textarea id="rejectionReason"></textarea>
+           <div class="btn-group">
+                <button id="confirmRejectBtn" class="btn btn-reject">Submit Rejection</button>
+           </div>
+       </div>
+   </div>
+
+    <!-- Notification element -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Audio elements -->
+    <audio id="successSound" src="{{ url_for('static', filename='success.mp3') }}" preload="auto"></audio>
+    <audio id="errorSound" src="{{ url_for('static', filename='error.mp3') }}" preload="auto"></audio>
+    <audio id="notificationSound" src="{{ url_for('static', filename='notification.mp3') }}" preload="auto"></audio>
+
+
+   <script>
+       document.addEventListener('DOMContentLoaded', function() {
+           const approveButtons = document.querySelectorAll('.btn-approve');
+           const rejectButtons = document.querySelectorAll('.btn-reject');
+           const rejectionModal = document.getElementById('rejectionModal');
+           const closeModalBtn = document.querySelector('#rejectionModal .close-modal');
+           const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+           const rejectionReasonTextarea = document.getElementById('rejectionReason');
+           let currentRequestIdToReject = null;
+
+           const notificationElement = document.getElementById('notification');
+           const successSound = document.getElementById('successSound');
+           const errorSound = document.getElementById('errorSound');
+           const notificationSound = document.getElementById('notificationSound');
+
+
+           // Add click listener to the document to handle clicks on dynamically added/removed buttons
+           document.addEventListener('click', function(event) {
+                // Handle Approve button click
+                if (event.target.classList.contains('btn-approve')) {
+                   const requestId = event.target.dataset.requestId;
+                   if (confirm('Are you sure you want to approve this request?')) {
+                       handleApproval(requestId, 'approve', event.target); // Pass button element
+                   }
+                }
+                // Handle Reject button click
+                if (event.target.classList.contains('btn-reject') && event.target !== confirmRejectBtn) { // Exclude modal button
+                    const requestId = event.target.dataset.requestId;
+                    currentRequestIdToReject = requestId;
+                    rejectionReasonTextarea.value = ''; // Clear previous reason
+                    rejectionModal.style.display = 'flex';
+                }
+           });
+
+
+           closeModalBtn.addEventListener('click', closeRejectionModal);
+           confirmRejectBtn.addEventListener('click', function() {
+                const reason = rejectionReasonTextarea.value.trim();
+                if (reason) {
+                   // Find the original reject button to pass to handleApproval for disabling
+                   const originalRejectButton = document.querySelector(`.btn-reject[data-request-id="${currentRequestIdToReject}"]`);
+                   handleApproval(currentRequestIdToReject, 'reject', originalRejectButton, reason);
+                   closeRejectionModal();
+                } else {
+                   alert('Please provide a reason for rejection.');
+                }
+           });
+
+
+           window.addEventListener('click', function(event) {
+               if (event.target === rejectionModal) {
+                   closeRejectionModal();
+               }
+           });
+
+
+            function disableButtons(requestId, disabled = true) {
+                const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                if (row) {
+                     row.querySelectorAll('.action-buttons button').forEach(btn => btn.disabled = disabled);
+                }
+            }
+
+
+           function handleApproval(requestId, action, buttonElement, reason = null) {
+                // Disable buttons in the row immediately
+                disableButtons(requestId);
+
+
+               const url = action === 'approve' ? `/approve/${requestId}` : `/reject/${requestId}`;
+               const method = 'POST';
+               const body = action === 'reject' ? new URLSearchParams({ reason: reason }) : null;
+               const headers = {
+                    'Content-Type': action === 'reject' ? 'application/x-www-form-urlencoded' : 'application/json'
+               };
+
+
+               fetch(url, { method, headers, body })
+               .then(response => response.json())
+               .then(data => {
+                   if (data.success) {
+                       showNotification(data.message, 'success');
+                       if (successSound) successSound.play();
+                       // Instead of full reload, maybe just hide the row or update status text
+                       const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                       if(row) {
+                            row.remove(); // Simple: remove the row from the list
+                            // Or more complex: update the status cell and move the row to dashboard
+                            // For now, just remove
+                       }
+                        // Check if the table is now empty and show "No requests" message
+                        const tbody = document.querySelector('table tbody');
+                        if (tbody && tbody.children.length === 0) {
+                            const container = document.querySelector('.content');
+                             if (container) {
+                               // Remove the table and add the no-requests message
+                                const tableResponsive = container.querySelector('.table-responsive');
+                                if(tableResponsive) tableResponsive.remove();
+                                if(!container.querySelector('.no-requests')) {
+                                   const p = document.createElement('p');
+                                   p.classList.add('no-requests');
+                                   p.textContent = `No requests pending ${document.title.replace(' Approval Queue', '')} Approval.`;
+                                   container.appendChild(p);
+                                }
+                             }
+                        }
+
+
+                   } else {
+                       showNotification('Error: ' + data.message, 'error');
+                       if (errorSound) errorSound.play();
+                        disableButtons(requestId, false); // Re-enable on error
+                   }
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+                   showNotification('An error occurred while processing the request: ' + error, 'error');
+                   if (errorSound) errorSound.play();
+                   disableButtons(requestId, false); // Re-enable on error
+               });
+           }
+
+
+            function closeRejectionModal() {
+               rejectionModal.style.display = 'none';
+               currentRequestIdToReject = null;
+               rejectionReasonTextarea.value = '';
+            }
+
+            function showNotification(message, type = 'info', duration = 3000) {
+                notificationElement.textContent = message;
+                notificationElement.className = `notification ${type}`;
+                notificationElement.classList.add('show');
+
+                if (notificationSound) notificationSound.play();
+
+                setTimeout(() => {
+                    notificationElement.classList.remove('show');
+                }, duration);
+            }
+       });
+   </script>
+</body>
+</html>

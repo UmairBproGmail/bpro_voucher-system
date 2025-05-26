@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Edit Voucher Details - Request ID: {{ request_data['Request ID'] }}</title>
+   <style>
+       body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #f4f7f6; color: #333; font-size: 14px; }
+       .form-container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+       .form-group { margin-bottom: 15px; }
+       .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+       .form-group input[type="text"],
+       .form-group input[type="number"],
+       .form-group input[type="url"],
+       .form-group select,
+       .form-group textarea {
+           width: 100%; /* Full width */
+           padding: 9px;
+           border: 1px solid #ccc;
+           border-radius: 5px;
+           font-size: 0.9rem;
+           box-sizing: border-box; /* Important for 100% width */
+           transition: border-color 0.3s;
+       }
+       .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #007bff; outline: none; }
+       .form-group textarea { min-height: 70px; resize: vertical; }
+       .form-actions { text-align: right; margin-top: 25px; }
+       .form-actions button {
+           padding: 10px 20px;
+           background-color: #007bff;
+           color: white;
+           border: none;
+           border-radius: 5px;
+           cursor: pointer;
+           font-size: 0.95rem;
+           font-weight: 500;
+           transition: background-color 0.3s;
+       }
+       .form-actions button:hover:not(:disabled) { background-color: #0056b3; }
+       .form-actions button:disabled { background-color: #ccc; cursor: not-allowed; }
+       h2 { text-align: center; color: #0056b3; margin-bottom: 20px; font-size: 1.5rem; }
+       fieldset { border: 1px solid #ddd; padding: 10px 15px 15px 15px; margin-bottom: 15px; border-radius: 5px; }
+       legend { font-weight: bold; color: #333; padding: 0 8px; font-size: 1.1rem; }
+       .row { display: flex; gap: 15px; flex-wrap: wrap; } /* Allow wrapping */
+       .col-half { flex: 1; min-width: 250px; } /* Ensure columns don't get too squished */
+       .col-third { flex: 1; min-width: 180px; }
+
+
+       .readonly-field { background-color: #e9ecef; opacity: 0.9; }
+        #messageArea { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; display: none; }
+       .message-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+       .message-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+
+       /* For dynamic item rows */
+       .item-row-dynamic { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;}
+       .item-row-dynamic .form-group { flex: 1; min-width: 100px; margin-bottom: 0;}
+       .item-row-dynamic .item-actions { display: flex; align-items: flex-end; }
+       .item-row-dynamic button { padding: 8px 12px; font-size: 0.8rem; border-radius: 4px; }
+       .item-row-dynamic .remove-item-btn { background-color: #e74c3c; color: white; border: none; }
+       .add-item-btn { background-color: #2ecc71; color: white; border: none; margin-top: 10px; }
+       .item-full-width { flex: 1 1 100%; } /* For item name/description to take full width */
+       .item-part-width { flex: 1; min-width: 80px; } /* For quantity/rate/amount */
+
+
+        /* Modal for Prepared By Selection (REMOVED HTML FOR THIS, BUT KEEPING CSS IF NEEDED ELSEWHERE) */
+        .prepared-by-modal { /* This modal is no longer used but CSS is kept for reference */
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .prepared-by-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .prepared-by-modal-content h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+        .prepared-by-modal-content select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        .prepared-by-modal-content button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .prepared-by-modal-content button:hover {
+            background-color: #0056b3;
+        }
+        .prepared-by-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+        .prepared-by-modal-close:hover {
+            color: #555;
+        }
+
+
+        @media (max-width: 600px) {
+           .row { flex-direction: column; gap: 0; }
+           .col-half, .col-third { min-width: 100%; }
+           h2 {font-size: 1.3rem;}
+           legend {font-size: 1rem;}
+           .item-row-dynamic { flex-direction: column; }
+           .item-row-dynamic .item-part-width, .item-row-dynamic .item-full-width { min-width: 100%; }
+           .item-row-dynamic .item-actions { justify-content: flex-end; width: 100%; }
+       }
+   </style>
+</head>
+<body>
+   <div class="form-container">
+       <h2>Edit Voucher Details (Request ID: {{ request_data['Request ID'] }})</h2>
+       <form id="editVoucherForm" method="POST">
+           <!-- Hidden fields to pass essential data -->
+           <input type="hidden" name="request_id" value="{{ request_data['Request ID'] }}">
+           <input type="hidden" name="original_request_pdf_link" value="{{ request_data['Request PDF Link'] }}">
+           <input type="hidden" name="approval_date" value="{{ request_data['Approval Date'] }}">
+           <input type="hidden" name="original_currency_from_request" value="{{ request_data['Currency'] }}">
+           <input type="hidden" name="company_name_from_request" value="{{ request_data['Company Name'] }}">
+
+           <fieldset>
+               <legend>Voucher Header</legend>
+               <div class="form-group">
+                   <label for="voucher_logo_url">Company Logo URL:</label>
+                   <input type="url" id="voucher_logo_url" name="voucher_logo_url" value="{{ request_data.logo_url }}" class="readonly-field" readonly>
+               </div>
+                <div class="form-group">
+                   <label for="company_name_display">Company Name:</label>
+                   <input type="text" id="company_name_display" name="company_name_display" value="{{ request_data['Company Name'] }}" class="readonly-field" readonly>
+               </div>
+           </fieldset>
+
+
+           <fieldset>
+               <legend>Payment Details</legend>
+               <div class="form-group">
+                   <label for="voucher_payment_type">Payment Type:</label>
+                   <input type="text" id="voucher_payment_type" name="voucher_payment_type" value="{{ request_data['Payment Type'] }}" class="readonly-field" readonly>
+               </div>
+               <div class="form-group">
+                   <label for="voucher_account_title">Account Title (Payee Name):</label>
+                   <input type="text" id="voucher_account_title" name="voucher_account_title" value="{{ request_data['Account Title'] }}" class="readonly-field" readonly>
+               </div>
+                <div class="row">
+                   <div class="col-half">
+                       <div class="form-group">
+                           <label for="voucher_bank_name">Bank Name:</label>
+                           <input type="text" id="voucher_bank_name" name="voucher_bank_name" value="{{ request_data['Bank Name'] }}" class="readonly-field" readonly>
+                       </div>
+                   </div>
+                   <div class="col-half">
+                       <div class="form-group">
+                           <label for="voucher_iban">IBAN/Account Number:</label>
+                           <input type="text" id="voucher_iban" name="voucher_iban" value="{{ request_data['IBAN Number'] }}" class="readonly-field" readonly>
+                       </div>
+                   </div>
+               </div>
+               <div class="form-group">
+                   <label for="voucher_bank_address">Bank Address:</label>
+                   <input type="text" id="voucher_bank_address" name="voucher_bank_address" value="{{ request_data['Bank Address'] }}" class="readonly-field" readonly>
+               </div>
+               <div class="form-group">
+                   <label for="payment_from_bank">Payment From Bank:</label>
+                   <select id="payment_from_bank" name="payment_from_bank">
+                       <option value="">Select Bank for Payment</option>
+                       <option value="Meezan Bank">Meezan Bank</option>
+                       <option value="Finja Bank">Finja Bank</option>
+                       <!-- Add more banks as needed -->
+                   </select>
+               </div>
+           </fieldset>
+
+
+           <fieldset>
+               <legend>Item Details</legend>
+               <div id="itemRowsContainer">
+                   <!-- Initial item row -->
+                   <div class="item-row-dynamic" data-item-index="1">
+                       <div class="form-group item-full-width">
+                           <label for="item_1_name">Item Name:</label>
+                           <input type="text" id="item_1_name" name="item_1_name" value="{{ request_data['Description'] }}">
+                       </div>
+                       <div class="form-group item-full-width">
+                           <label for="item_1_description">Description (for voucher):</label>
+                           <input type="text" id="item_1_description" name="item_1_description" value="{{ request_data['Description'] }}">
+                       </div>
+                       <div class="form-group item-part-width">
+                           <label for="item_1_quantity">Quantity:</label>
+                           <input type="number" id="item_1_quantity" name="item_1_quantity" value="{{ request_data['Quantity']|float }}" step="any" required oninput="calculateAndUpdateAmounts()">
+                       </div>
+                       <div class="form-group item-part-width">
+                           <label for="item_1_rate">Rate:</label>
+                           <input type="number" id="item_1_rate" name="item_1_rate" value="{{ request_data['Rate']|float }}" step="any" required oninput="calculateAndUpdateAmounts()">
+                       </div>
+                       <div class="form-group item-part-width">
+                           <label for="item_1_amount">Amount (auto-calc):</label>
+                           <input type="number" id="item_1_amount" name="item_1_amount" value="{{ request_data['Amount']|float }}" step="any" required class="readonly-field" readonly>
+                       </div>
+                       <div class="item-actions">
+                           <!-- Only the first row doesn't have a remove button initially -->
+                       </div>
+                   </div>
+               </div>
+               <button type="button" id="addItemBtn" class="add-item-btn">+ Add Another Item</button>
+           </fieldset>
+
+
+           <fieldset>
+               <legend>Total & Currency</legend>
+               <div class="row">
+                   <div class="col-half">
+                       <div class="form-group">
+                           <label for="voucher_total_amount">Total Amount (Numeric):</label>
+                           <input type="number" id="voucher_total_amount" name="voucher_total_amount" value="{{ request_data['Amount']|float }}" step="any" required class="readonly-field" readonly>
+                       </div>
+                   </div>
+                   <div class="col-half">
+                       <div class="form-group">
+                           <label for="voucher_currency_for_total">Currency Symbol for Total:</label>
+                           <select id="voucher_currency_for_total" name="voucher_currency_for_total">
+                               {% set currencies = {
+                                   "PKR": "Rs.", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "AUD": "A$",
+                                   "CAD": "C$", "CNY": "¥", "HKD": "HK$", "NZD": "NZ$", "SEK": "kr", "KRW": "₩",
+                                   "SGD": "S$", "NOK": "kr", "MXN": "Mex$", "INR": "₹", "BRL": "R$", "RUB": "₽",
+                                   "ZAR": "R", "AED": "د.إ", "SAR": "ر.س", "TRY": "₺", "THB": "฿", "MYR": "RM",
+                                   "IDR": "Rp", "PHP": "₱", "VND": "₫", "PLN": "zł", "CZK": "Kč", "HUF": "Ft",
+                                   "RON": "lei", "ILS": "₪", "CLP": "CLP$", "COP": "COL$", "PEN": "S/.", "ARS": "$"
+                               } %}
+                               {% for code, symbol in currencies.items() %}
+                                   <option value="{{ symbol }}" {% if symbol == request_data.Currency_Symbol %}selected{% endif %}>{{ code }} ({{ symbol }})</option>
+                               {% endfor %}
+                           </select>
+                       </div>
+                   </div>
+               </div>
+           </fieldset>
+
+
+           <fieldset>
+               <legend>Approval Signatories</legend>
+                <div class="form-group">
+                   <label for="prepared_by_name_selected">Prepared By Name:</label>
+                   <select id="prepared_by_name_selected" name="prepared_by_name_selected" required>
+                       <option value="">Select a name</option>
+                       {% for name in prepared_by_names %}
+                           <option value="{{ name }}" {% if name == request_data.Name %}selected{% endif %}>{{ name }}</option>
+                       {% endfor %}
+                   </select>
+               </div>
+               <div class="form-group">
+                   <label for="finance_review_name">Finance Review Name:</label>
+                   <input type="text" id="finance_review_name" name="finance_review_name" value="{{ request_data['Finance Review'] }}">
+               </div>
+               <div class="form-group">
+                   <label for="approved_by_name">Approved By Name:</label>
+                   <input type="text" id="approved_by_name" name="approved_by_name" value="{{ CEO_APPROVER_NAME if request_data['Approval Type'] == 'CEO' else STANDARD_APPROVER_NAME }}" class="readonly-field" readonly>
+               </div>
+           </fieldset>
+
+
+           <div id="messageArea"></div>
+
+
+           <div class="form-actions">
+               <button type="submit" id="generateVoucherBtn">Generate & Merge Voucher PDF</button>
+           </div>
+       </form>
+   </div>
+
+    <div id="preparedByModal" class="prepared-by-modal">
+        <div class="prepared-by-modal-content">
+            <span class="prepared-by-modal-close">×</span>
+            <h3>Select "Prepared By" Name</h3>
+            <select id="preparedBySelect">
+                <option value="">Select a name</option>
+            </select>
+            <button id="confirmPreparedByBtn">Confirm</button>
+        </div>
+    </div>
+
+
+<script>
+   let nextItemIndex = 2;
+   const MAX_ITEM_LINES = 5;
+
+   const currencySymbols = {
+       "PKR": "Rs.", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "AUD": "A$",
+       "CAD": "C$", "CNY": "¥", "HKD": "HK$", "NZD": "NZ$", "SEK": "kr", "KRW": "₩",
+       "SGD": "S$", "NOK": "kr", "MXN": "Mex$", "INR": "₹", "BRL": "R$", "RUB": "₽",
+       "ZAR": "R", "AED": "د.إ", "SAR": "ر.س", "TRY": "₺", "THB": "฿", "MYR": "RM",
+       "IDR": "Rp", "PHP": "₱", "VND": "₫", "PLN": "zł", "CZK": "Kč", "HUF": "Ft",
+       "RON": "lei", "ILS": "₪", "CLP": "CLP$", "COP": "COL$", "PEN": "S/.", "ARS": "$"
+   };
+
+   document.getElementById('voucher_currency_for_total').addEventListener('change', function() {
+       // This simply updates the form data with the selected symbol for submission.
+   });
+
+   function calculateAndUpdateAmounts() {
+       let totalAmount = 0;
+       document.querySelectorAll('.item-row-dynamic').forEach(row => {
+           const qtyInput = row.querySelector('[name$="_quantity"]');
+           const rateInput = row.querySelector('[name$="_rate"]');
+           const amountInput = row.querySelector('[name$="_amount"]');
+
+           const qty = parseFloat(qtyInput.value) || 0;
+           const rate = parseFloat(rateInput.value) || 0;
+           const calculatedAmount = qty * rate;
+
+           amountInput.value = calculatedAmount.toFixed(2);
+           totalAmount += calculatedAmount;
+       });
+       document.getElementById('voucher_total_amount').value = totalAmount.toFixed(2);
+   }
+
+   function addItemRow() {
+       if (nextItemIndex > MAX_ITEM_LINES) {
+           alert(`You can add a maximum of ${MAX_ITEM_LINES} item lines.`);
+           return;
+       }
+
+       const container = document.getElementById('itemRowsContainer');
+       const newItemRow = document.createElement('div');
+       newItemRow.className = 'item-row-dynamic';
+       newItemRow.dataset.itemIndex = nextItemIndex;
+       newItemRow.innerHTML = `
+           <div class="form-group item-full-width">
+               <label for="item_${nextItemIndex}_name">Item Name:</label>
+               <input type="text" id="item_${nextItemIndex}_name" name="item_${nextItemIndex}_name" placeholder="Item Name">
+           </div>
+           <div class="form-group item-full-width">
+               <label for="item_${nextItemIndex}_description">Description (for voucher):</label>
+               <input type="text" id="item_${nextItemIndex}_description" name="item_${nextItemIndex}_description" placeholder="Description">
+           </div>
+           <div class="form-group item-part-width">
+               <label for="item_${nextItemIndex}_quantity">Quantity:</label>
+               <input type="number" id="item_${nextItemIndex}_quantity" name="item_${nextItemIndex}_quantity" value="0" step="any" oninput="calculateAndUpdateAmounts()">
+           </div>
+           <div class="form-group item-part-width">
+               <label for="item_${nextItemIndex}_rate">Rate:</label>
+               <input type="number" id="item_${nextItemIndex}_rate" name="item_${nextItemIndex}_rate" value="0" step="any" oninput="calculateAndUpdateAmounts()">
+           </div>
+           <div class="form-group item-part-width">
+               <label for="item_${nextItemIndex}_amount">Amount (auto-calc):</label>
+               <input type="number" id="item_${nextItemIndex}_amount" name="item_${nextItemIndex}_amount" value="0.00" step="any" class="readonly-field" readonly>
+           </div>
+           <div class="item-actions">
+               <button type="button" class="remove-item-btn">Remove</button>
+           </div>
+       `;
+       container.appendChild(newItemRow);
+       nextItemIndex++;
+   }
+
+   function removeParentItemRow(button) {
+       const rowToRemove = button.closest('.item-row-dynamic');
+       if (rowToRemove) {
+           rowToRemove.remove();
+           calculateAndUpdateAmounts();
+       }
+   }
+
+   document.getElementById('addItemBtn').addEventListener('click', addItemRow);
+   document.getElementById('itemRowsContainer').addEventListener('click', function(event) {
+       if (event.target.classList.contains('remove-item-btn')) {
+           removeParentItemRow(event.target);
+       }
+   });
+
+
+   // Initial calculation on load
+   calculateAndUpdateAmounts();
+
+
+   const form = document.getElementById('editVoucherForm');
+   const submitButton = document.getElementById('generateVoucherBtn');
+   const messageArea = document.getElementById('messageArea');
+
+
+   form.addEventListener('submit', async function(event) {
+       event.preventDefault();
+
+       messageArea.style.display = 'none';
+       submitButton.disabled = true;
+       submitButton.textContent = 'Generating... Please Wait';
+
+       try {
+           const formData = new FormData(form);
+           const response = await fetch("{{ url_for('generate_voucher_route') }}", {
+               method: 'POST',
+               body: formData
+           });
+           const data = await response.json();
+
+           if (data.success) {
+               messageArea.textContent = 'Voucher generated successfully! Closing modal...';
+               messageArea.className = 'message-success';
+               messageArea.style.display = 'block';
+
+               window.parent.postMessage({
+                   type: 'voucherGenerated',
+                   voucherUrl: data.voucher_url,
+                   requestId: data.request_id
+               }, "*");
+
+           } else {
+               messageArea.textContent = 'Voucher Generation Failed: ' + (data.message || "Unknown error");
+               messageArea.className = 'message-error';
+               messageArea.style.display = 'block';
+               window.parent.postMessage({
+                   type: 'voucherGenerationFailed',
+                   message: data.message || "Unknown error",
+                   requestId: formData.get('request_id')
+               }, "*");
+           }
+       } catch (error) {
+           console.error('Error submitting voucher form:', error);
+           messageArea.textContent = 'An error occurred: ' + error.message;
+           messageArea.className = 'message-error';
+           messageArea.style.display = 'block';
+            window.parent.postMessage({
+               type: 'voucherGenerationFailed',
+               message: 'Client-side error: ' + error.message,
+               requestId: form.elements['request_id'].value
+           }, "*");
+       } finally {
+           submitButton.disabled = false;
+           submitButton.textContent = 'Generate & Merge Voucher PDF';
+       }
+   });
+
+</script>
+</body>
+</html>
