@@ -84,8 +84,12 @@ COMPANY_LOGOS = {
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
-SCOPES = ['https://www.googleapis.com/auth/drive',
-          'https://www.googleapis.com/auth/spreadsheets']
+SCOPES = [
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets'
+]
 
 if letter:
     PAGE_WIDTH_POINTS, PAGE_HEIGHT_POINTS = letter
