@@ -930,7 +930,7 @@ def generate_pdf(data, approval_type, attachment_path=None):
       .info-table th { background-color: #f2f2f2; font-weight: bold; width: 30%; }
 
 
-      .overall-approval-area { margin-top: 99mm; page-break-inside: avoid;} /* Adjusted margin */
+      .overall-approval-area { margin-top: 35mm; page-break-inside: avoid;} /* Adjusted margin */
       .approval-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 5px; color: black; }
       .approval-separator { border-bottom: 1px solid black; margin-bottom: 15px; }
 
