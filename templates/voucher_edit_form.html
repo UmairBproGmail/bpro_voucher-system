@@ -166,26 +166,23 @@
                </div>
                <div class="form-group">
                    <label for="voucher_account_title">Account Title (Payee Name):</label>
-                   <input type="text" id="voucher_account_title" name="voucher_account_title" value="{{ request_data['Account Title'] }}" class="readonly-field" readonly>
+                   <input type="text" id="voucher_account_title" name="voucher_account_title" value="{{ request_data['Account Title'] }}">
                </div>
                 <div class="row">
                    <div class="col-half">
                        <div class="form-group">
                            <label for="voucher_bank_name">Bank Name:</label>
-                           <input type="text" id="voucher_bank_name" name="voucher_bank_name" value="{{ request_data['Bank Name'] }}" class="readonly-field" readonly>
+                           <input type="text" id="voucher_bank_name" name="voucher_bank_name" value="{{ request_data['Bank Name'] }}">
                        </div>
                    </div>
                    <div class="col-half">
                        <div class="form-group">
                            <label for="voucher_iban">IBAN/Account Number:</label>
-                           <input type="text" id="voucher_iban" name="voucher_iban" value="{{ request_data['IBAN Number'] }}" class="readonly-field" readonly>
+                           <input type="text" id="voucher_iban" name="voucher_iban" value="{{ request_data['IBAN Number'] }}">
                        </div>
                    </div>
                </div>
                <div class="form-group">
-                   <label for="voucher_bank_address">Bank Address:</label>
-                   <input type="text" id="voucher_bank_address" name="voucher_bank_address" value="{{ request_data['Bank Address'] }}" class="readonly-field" readonly>
-               </div>
                <div class="form-group">
                    <label for="payment_from_bank">Payment From Bank:</label>
                    <select id="payment_from_bank" name="payment_from_bank">
@@ -208,7 +205,7 @@
                            <input type="text" id="item_1_name" name="item_1_name" value="{{ request_data['Description'] }}">
                        </div>
                        <div class="form-group item-full-width">
-                           <label for="item_1_description">Description (for voucher):</label>
+                           <label for="item_1_description">Description:</label>
                            <input type="text" id="item_1_description" name="item_1_description" value="{{ request_data['Description'] }}">
                        </div>
                        <div class="form-group item-part-width">
@@ -220,7 +217,7 @@
                            <input type="number" id="item_1_rate" name="item_1_rate" value="{{ request_data['Rate']|float }}" step="any" required oninput="calculateAndUpdateAmounts()">
                        </div>
                        <div class="form-group item-part-width">
-                           <label for="item_1_amount">Amount (auto-calc):</label>
+                           <label for="item_1_amount">Total Amount:</label>
                            <input type="number" id="item_1_amount" name="item_1_amount" value="{{ request_data['Amount']|float }}" step="any" required class="readonly-field" readonly>
                        </div>
                        <div class="item-actions">
@@ -356,7 +353,7 @@
                <input type="text" id="item_${nextItemIndex}_name" name="item_${nextItemIndex}_name" placeholder="Item Name">
            </div>
            <div class="form-group item-full-width">
-               <label for="item_${nextItemIndex}_description">Description (for voucher):</label>
+               <label for="item_${nextItemIndex}_description">Description:</label>
                <input type="text" id="item_${nextItemIndex}_description" name="item_${nextItemIndex}_description" placeholder="Description">
            </div>
            <div class="form-group item-part-width">
@@ -368,7 +365,7 @@
                <input type="number" id="item_${nextItemIndex}_rate" name="item_${nextItemIndex}_rate" value="0" step="any" oninput="calculateAndUpdateAmounts()">
            </div>
            <div class="form-group item-part-width">
-               <label for="item_${nextItemIndex}_amount">Amount (auto-calc):</label>
+               <label for="item_${nextItemIndex}_amount">Total Amount:</label>
                <input type="number" id="item_${nextItemIndex}_amount" name="item_${nextItemIndex}_amount" value="0.00" step="any" class="readonly-field" readonly>
            </div>
            <div class="item-actions">
