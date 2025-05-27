@@ -387,6 +387,7 @@
   </style>
 </head>
 <body>
+  <div id="custom-notification-area"></div>
   <div class="form-container">
       <div class="form-header">
           <h1><i class="fas fa-file-signature"></i> Request Form</h1>
@@ -433,34 +434,34 @@
               <div class="form-section">
                   <h2><i class="fas fa-university"></i> Bank Details</h2>
                   <div class="form-group">
-                      <label for="accountTitle" class="required">Account Title</label>
+                      <label for="accountTitle">Account Title</label> {# Removed required #}
                       <div class="input-with-icon">
                           <i class="fas fa-heading"></i>
-                          <input type="text" id="accountTitle" name="accountTitle" required placeholder="Account Holder Name">
+                          <input type="text" id="accountTitle" name="accountTitle" placeholder="Account Holder Name"> {# Removed required #}
                       </div>
                       <div class="error-message" id="accountTitleError"></div>
                   </div>
                   <div class="form-group">
-                      <label for="accountNumber" class="required">Account Number</label>
+                      <label for="accountNumber">Account Number</label> {# Removed required #}
                       <div class="input-with-icon">
                           <i class="fas fa-hashtag"></i>
-                          <input type="text" id="accountNumber" name="accountNumber" placeholder="e.g., 1234567890">
+                          <input type="text" id="accountNumber" name="accountNumber" placeholder="e.g., 1234567890"> {# Removed required #}
                       </div>
                       <div class="error-message" id="accountNumberError"></div>
                   </div>
                   <div class="form-group">
-                      <label for="ibanNumber" class="required">IBAN Number</label>
+                      <label for="ibanNumber">IBAN Number</label> {# Removed required #}
                       <div class="input-with-icon">
                           <i class="fas fa-money-check-alt"></i>
-                          <input type="text" id="ibanNumber" name="ibanNumber" placeholder="e.g., PKxxBANKxxxxxxxxxxxxxxxxx">
+                          <input type="text" id="ibanNumber" name="ibanNumber" placeholder="e.g., PKxxBANKxxxxxxxxxxxxxxxxx"> {# Removed required #}
                       </div>
                       <div class="error-message" id="ibanNumberError"></div>
                   </div>
                    <div class="form-group">
-                      <label for="bankName" class="required">Bank Name</label>
+                      <label for="bankName">Bank Name</label> {# Removed required #}
                       <div class="input-with-icon">
                           <i class="fas fa-university"></i>
-                          <input type="text" id="bankName" name="bankName" required placeholder="e.g., Meezan Bank, HBL">
+                          <input type="text" id="bankName" name="bankName" placeholder="e.g., Meezan Bank, HBL"> {# Removed required #}
                       </div>
                       <div class="error-message" id="bankNameError"></div>
                   </div>
@@ -571,21 +572,14 @@
           <div class="button-container">
               <a href="{{ url_for('dashboard_login') }}" class="btn btn-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
 
-              <button type="button" id="mainSubmitBtn" class="btn btn-primary">
-                  <i class="fas fa-paper-plane"></i> Submit Request
-              </button>
-
-              <button type="button" id="previewPdfBtn" class="btn btn-info" style="display: none;">
+              <button type="button" id="previewPdfBtn" class="btn btn-info">
                   <i class="fas fa-file-pdf"></i> Preview PDF
               </button>
-              <button type="button" id="standardApprovalBtn" class="btn btn-primary" style="display: none;">
+              <button type="button" id="standardApprovalBtn" class="btn btn-primary">
                   <i class="fas fa-user-check"></i> Send for Standard Approval
               </button>
-              <button type="button" id="ceoApprovalBtn" class="btn btn-secondary" style="display: none;">
+              <button type="button" id="ceoApprovalBtn" class="btn btn-secondary">
                   <i class="fas fa-user-tie"></i> Send for CEO Approval
-              </button>
-              <button type="button" id="cancelBtn" class="btn" style="display: none; background-color: #ccc;">
-               <i class="fas fa-times"></i> Cancel
               </button>
           </div>
            <div id="loadingMessage" style="display: none; text-align: right; margin-top: 10px; font-style: italic; color: #555;">
@@ -613,19 +607,17 @@
     <div id="notification" class="notification"></div>
 
     <!-- Audio elements -->
-    <audio id="successSound" src="{{ url_for('static', filename='success.mp3') }}" preload="auto"></audio>
-    <audio id="errorSound" src="{{ url_for('static', filename='error.mp3') }}" preload="auto"></audio>
-    <audio id="submitSound" src="{{ url_for('static', filename='submit.mp3') }}" preload="auto"></audio>
+    <audio id="successSound" src="{{ url_for('static', filename='sounds/notification.mp3') }}" preload="auto"></audio>
+    <audio id="errorSound" src="{{ url_for('static', filename='sounds/notification.mp3') }}" preload="auto"></audio>
+    <audio id="submitSound" src="{{ url_for('static', filename='sounds/notification.mp3') }}" preload="auto"></audio>
 
 
   <script>
       document.addEventListener('DOMContentLoaded', function() {
           const form = document.getElementById('requestForm');
-          const mainSubmitBtn = document.getElementById('mainSubmitBtn');
           const previewPdfBtn = document.getElementById('previewPdfBtn');
           const standardApprovalBtn = document.getElementById('standardApprovalBtn');
           const ceoApprovalBtn = document.getElementById('ceoApprovalBtn');
-          const cancelBtn = document.getElementById('cancelBtn');
           const actionInput = document.getElementById('action');
           const fileInput = document.getElementById('document');
           const fileLabelText = document.getElementById('fileLabelText');
@@ -650,19 +642,14 @@
           initFormValidation();
           updateFileLabel(fileInput);
 
-          mainSubmitBtn.addEventListener('click', handleMainSubmitClick);
           previewPdfBtn.addEventListener('click', handlePreviewClick);
           standardApprovalBtn.addEventListener('click', () => handleApprovalSubmit('standard_approval'));
           ceoApprovalBtn.addEventListener('click', () => handleApprovalSubmit('ceo_approval'));
-          cancelBtn.addEventListener('click', resetFormState);
           fileInput.addEventListener('change', () => updateFileLabel(fileInput));
 
           closeModal.addEventListener('click', closeStatusModal);
           closeModalBtn.addEventListener('click', closeStatusModal);
           window.addEventListener('click', outsideModalClick);
-
-
-
 
           function initFormValidation() {
               const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
@@ -674,11 +661,15 @@
                fileInput.addEventListener('blur', () => validateField(fileInput));
           }
 
-
           function validateField(field) {
               const errorElement = document.getElementById(`${field.id}Error`);
+              // For optional fields, if no error element, or if it's not required, skip validation
               if (!errorElement) return true;
-
+              // If field is not required and empty, it's valid
+              if (!field.required && !field.value.trim()) {
+                  hideError(errorElement);
+                  return true;
+              }
 
               // File input required check
               if (field.id === 'document' && field.required) {
@@ -691,13 +682,11 @@
                    }
               }
 
-
               // Email format validation
               if (field.type === 'email' && field.value.trim() && !isValidEmail(field.value)) {
                   showError(errorElement, 'Please enter a valid email address');
                   return false;
               }
-
 
               // Quantity validation
               if (field.id === 'quantity' && field.value.trim() && parseInt(field.value) <= 0) {
@@ -708,7 +697,6 @@
                    return false;
               }
 
-
               // Amount validation
               if (field.id === 'amount' && field.value.trim() && parseFloat(field.value) <= 0) {
                   showError(errorElement, 'Amount must be greater than 0');
@@ -718,20 +706,15 @@
                   return false;
               }
 
-
                // Default required field check for others
               if (field.required && !field.value.trim() && field.id !== 'document') {
                   showError(errorElement, 'This field is required');
                   return false;
               }
 
-
               hideError(errorElement);
               return true;
           }
-
-
-
 
           function showError(element, message) {
               if (element) {
@@ -740,23 +723,20 @@
               }
           }
 
-
           function hideError(element) {
               if (element) {
                   element.style.display = 'none';
               }
           }
 
-
           function isValidEmail(email) {
               return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
           }
 
-
           function validateForm() {
               let isValid = true;
+              // Select only actually required fields
               const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-
 
               inputs.forEach(input => {
                   if (!validateField(input)) {
@@ -764,23 +744,18 @@
                   }
               });
 
-
               if (fileInput.required) {
                    if (!validateField(fileInput)) {
                        isValid = false;
                    }
               }
 
-
               return isValid;
           }
 
-
-
-
-          function handleMainSubmitClick() {
+          function handlePreviewClick() {
               if (!validateForm()) {
-                  const firstErrorElement = form.querySelector('.error-message[style="display: block;"]');
+                  const firstErrorElement = form.querySelector('.error-message[style*="block"]');
                   if (firstErrorElement) {
                       firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   } else {
@@ -792,68 +767,53 @@
                   return;
               }
 
-
-              setButtonsDisabled(true);
-              mainSubmitBtn.style.display = 'none';
-
-
-              previewPdfBtn.style.display = 'inline-flex';
-              standardApprovalBtn.style.display = 'inline-flex';
-              ceoApprovalBtn.style.display = 'inline-flex';
-              cancelBtn.style.display = 'inline-flex';
-              setButtonsDisabled(false);
-          }
-
-
-          function handlePreviewClick() {
               actionInput.value = 'preview';
               processFormSubmission();
           }
 
-
           function handleApprovalSubmit(action) {
+              if (!validateForm()) {
+                  const firstErrorElement = form.querySelector('.error-message[style*="block"]');
+                  if (firstErrorElement) {
+                      firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  } else {
+                      const firstInvalidInput = form.querySelector(':invalid');
+                      if (firstInvalidInput) {
+                           firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                  }
+                  return;
+              }
+
               actionInput.value = action;
               processFormSubmission();
           }
 
-
           function setButtonsDisabled(disabled) {
-              mainSubmitBtn.disabled = disabled;
               previewPdfBtn.disabled = disabled;
               standardApprovalBtn.disabled = disabled;
               ceoApprovalBtn.disabled = disabled;
-              cancelBtn.disabled = disabled;
-               const dashboardLink = document.querySelector('.btn-dashboard');
-               if (dashboardLink) {
-                   if (disabled) {
-                        dashboardLink.classList.add('btn:disabled');
-                        dashboardLink.style.pointerEvents = 'none';
-                   } else {
-                        dashboardLink.classList.remove('btn:disabled');
-                        dashboardLink.style.pointerEvents = 'auto';
-                   }
-               }
+              const dashboardLink = document.querySelector('.btn-dashboard');
+              if (dashboardLink) {
+                  if (disabled) {
+                       dashboardLink.classList.add('btn:disabled');
+                       dashboardLink.style.pointerEvents = 'none';
+                  } else {
+                       dashboardLink.classList.remove('btn:disabled');
+                       dashboardLink.style.pointerEvents = 'auto';
+                  }
+              }
           }
-
-
-
 
           function processFormSubmission() {
               setButtonsDisabled(true);
-              previewPdfBtn.style.display = 'none';
-              standardApprovalBtn.style.display = 'none';
-              ceoApprovalBtn.style.display = 'none';
-              cancelBtn.style.display = 'none';
               loadingMessage.style.display = 'block';
-
 
               // Play sound for submission
               if (submitSound) submitSound.play();
               showNotification('Submitting request...', 'info');
 
-
               const formData = new FormData(form);
-
 
               fetch('/submit', {
                   method: 'POST',
@@ -902,6 +862,10 @@
               });
           }
 
+          function resetFormState() {
+              setButtonsDisabled(false);
+              loadingMessage.style.display = 'none';
+          }
 
           function updateFileLabel(input) {
               if (input.files && input.files.length > 0) {
@@ -914,7 +878,6 @@
               }
           }
 
-
           function showStatusModal(title, message, type) {
               modalTitle.textContent = title;
               modalMessage.textContent = message;
@@ -923,11 +886,9 @@
               statusModal.style.display = 'flex';
           }
 
-
           function closeStatusModal() {
               statusModal.style.display = 'none';
           }
-
 
           function outsideModalClick(e) {
               if (e.target === statusModal) {
@@ -935,31 +896,10 @@
               }
           }
 
-
-          function resetFormState() {
-               loadingMessage.style.display = 'none';
-               mainSubmitBtn.style.display = 'inline-flex';
-               previewPdfBtn.style.display = 'none';
-               standardApprovalBtn.style.display = 'none';
-               ceoApprovalBtn.style.display = 'none';
-               cancelBtn.style.display = 'none';
-               setButtonsDisabled(false);
-               actionInput.value = '';
-               if (!form.elements['document'].value) {
-                   updateFileLabel(form.elements['document']);
-               }
-                form.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-          }
-
-
           function showNotification(message, type = 'info', duration = 3000) {
               notificationElement.textContent = message;
               notificationElement.className = `notification ${type}`;
               notificationElement.classList.add('show');
-
-
-              if (submitSound) submitSound.play();
-
 
               setTimeout(() => {
                   notificationElement.classList.remove('show');
