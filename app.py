@@ -2142,11 +2142,10 @@ def error_page():
 
 
 @app.route('/edit_voucher_details/<request_id>')
-@require_auth('dashboard') # Ensure only authenticated dashboard users can access this
+@require_auth('dashboard')
 def edit_voucher_details(request_id):
-   creds = get_credentials() # Already checked by require_auth, but good for direct use if needed
+   creds = get_credentials()
    if not creds:
-       # This should ideally not be hit if require_auth is working
        return "Authentication required.", 401
 
 
@@ -2154,40 +2153,38 @@ def edit_voucher_details(request_id):
    spreadsheet_id = GOOGLE_SHEETS_SPREADSHEET_ID
 
 
-   # Fetch original request data from Sheet1
    original_req_data, err = get_request_by_id(request_id)
    if err or not original_req_data:
        logging.error(f"Error fetching original request data for voucher edit (ID: {request_id}): {err}")
        return f"Error fetching request data for ID '{request_id}': {err or 'Not found'}. Please ensure the request exists and is approved.", 404
 
 
-   # Fetch approver signature data from Sheet2
    approver_data_from_sheet2 = get_approver_signatures_from_sheet(sheets_service, spreadsheet_id)
 
 
-   # Prepare data for the voucher_edit_form.html template
-   # Start with original request data and then override/add voucher specific fields
-   voucher_form_data = original_req_data.copy() # Make a copy to avoid modifying original dict
+   voucher_form_data = original_req_data.copy()
 
 
-   # Default/Derived values for the form
    voucher_form_data.setdefault('Bank Name', voucher_form_data.get('Bank Name', ''))
-   voucher_form_data.setdefault('IBAN', voucher_form_data.get('IBAN Number', '')) # Use IBAN Number for IBAN field
-   voucher_form_data.setdefault('Finance Review', approver_data_from_sheet2.get('finance_review_name_default', 'N/A')) # Default Finance Reviewer Name
+   voucher_form_data.setdefault('IBAN', voucher_form_data.get('IBAN Number', ''))
+   voucher_form_data.setdefault('Finance Review', approver_data_from_sheet2.get('finance_review_name_default', 'N/A'))
 
 
-   company_name_from_request = voucher_form_data.get('Company Name', 'Bpro') # Default to 'Bpro' if not found
-   voucher_form_data['logo_url'] = COMPANY_LOGOS.get(company_name_from_request, COMPANY_LOGOS.get('Bpro', '')) # Fallback to Bpro logo then empty
+   company_name_from_request = voucher_form_data.get('Company Name', 'Bpro')
+   # Logging the company name and the URL it tries to retrieve
+   selected_logo_url = COMPANY_LOGOS.get(company_name_from_request, COMPANY_LOGOS.get('Bpro', ''))
+   voucher_form_data['logo_url'] = selected_logo_url
+   logging.info(f"Voucher Edit: Company Name '{company_name_from_request}' resolved to Logo URL: '{selected_logo_url}'")
 
 
    try:
        amount = float(voucher_form_data.get('Amount', 0))
        quantity = float(voucher_form_data.get('Quantity', 1))
-       if quantity == 0: quantity = 1 # Avoid division by zero
+       if quantity == 0: quantity = 1
        rate = amount / quantity
        voucher_form_data.setdefault('Rate', str(round(rate, 2)))
    except (ValueError, TypeError):
-       voucher_form_data.setdefault('Rate', voucher_form_data.get('Amount', '0')) # Fallback for rate
+       voucher_form_data.setdefault('Rate', voucher_form_data.get('Amount', '0'))
 
 
    currency_symbols = {"PKR": "Rs.", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "AUD": "A$", "CAD": "C$",
@@ -2199,16 +2196,15 @@ def edit_voucher_details(request_id):
    voucher_form_data.setdefault('Currency_Symbol', currency_symbols.get(voucher_form_data.get('Currency',''), voucher_form_data.get('Currency','')))
 
 
-   # Get the 'Voucher Prepared By' name from the sheet if it exists, otherwise default to original requester name
    voucher_prepared_by_from_sheet = original_req_data['Voucher Prepared By'] if original_req_data.get('Voucher Prepared By') else original_req_data.get('Name', '')
-   voucher_form_data.setdefault('Voucher Prepared By', voucher_prepared_by_from_sheet) # NEW
+   voucher_form_data.setdefault('Voucher Prepared By', voucher_prepared_by_from_sheet)
 
-   # Prepare list for "Prepared By" dropdown, ensure original requester and sheet's prepared by are options
-   prepared_by_names_list = list(approver_data_from_sheet2.get('prepared_by_names', [])) # Make a mutable copy
+
+   prepared_by_names_list = list(approver_data_from_sheet2.get('prepared_by_names', []))
    original_requester_name = voucher_form_data.get('Name', '')
    if original_requester_name and original_requester_name not in prepared_by_names_list:
-       prepared_by_names_list.insert(0, original_requester_name) # Add to start if not present
-   if voucher_prepared_by_from_sheet and voucher_prepared_by_from_sheet not in prepared_by_names_list: # Ensure sheet's prepared by is also an option
+       prepared_by_names_list.insert(0, original_requester_name)
+   if voucher_prepared_by_from_sheet and voucher_prepared_by_from_sheet not in prepared_by_names_list:
        prepared_by_names_list.insert(0, voucher_prepared_by_from_sheet)
 
 
@@ -2217,61 +2213,56 @@ def edit_voucher_details(request_id):
 
 
    return render_template('voucher_edit_form.html',
-                          request_data=voucher_form_data, # This now contains merged data
+                          request_data=voucher_form_data,
                           CEO_APPROVER_NAME=CEO_APPROVER_NAME,
                           STANDARD_APPROVER_NAME=STANDARD_APPROVER_NAME,
-                          prepared_by_names=prepared_by_names_list) # Pass the curated list
+                          prepared_by_names=prepared_by_names_list)
 
 
 @app.route('/generate_voucher', methods=['POST'])
-@require_auth('dashboard') # Ensure only authenticated dashboard users can access this
+@require_auth('dashboard')
 def generate_voucher_route():
-   creds = get_credentials() # Already checked by require_auth
+   creds = get_credentials()
    if not creds:
        return jsonify({"success": False, "message": "Authentication required"}), 401
 
 
-   form_data_from_html_form = request.form # Data submitted from voucher_edit_form.html
+   form_data_from_html_form = request.form
    request_id = form_data_from_html_form.get('request_id')
    if not request_id:
        return jsonify({"success": False, "message": "Missing request_id from form"}), 400
 
 
-   # Fetch original request data to ensure consistency and for fallbacks
    original_req_data_from_sheet, err = get_request_by_id(request_id)
    if err or not original_req_data_from_sheet:
        logging.error(f"Failed to fetch original request data for voucher generation (ID: {request_id}): {err}")
        return jsonify({"success": False, "message": f"Failed to fetch original request data: {err or 'Not found'}"}), 500
 
 
-   # Prepare the data payload for voucher_template.html
-   # Prioritize form data, but use original sheet data for non-editable fields or fallbacks
    voucher_template_data = {}
    voucher_template_data['request_id'] = request_id
-   voucher_template_data['voucher_payment_type'] = original_req_data_from_sheet.get('Payment Type', '') # From sheet
-   voucher_template_data['payment_from_bank'] = form_data_from_html_form.get('payment_from_bank', '') # From form
+   voucher_template_data['voucher_payment_type'] = original_req_data_from_sheet.get('Payment Type', '')
+   voucher_template_data['payment_from_bank'] = form_data_from_html_form.get('payment_from_bank', '')
    voucher_template_data['voucher_account_title'] = form_data_from_html_form.get('voucher_account_title', original_req_data_from_sheet.get('Account Title', ''))
    voucher_template_data['voucher_bank_name'] = form_data_from_html_form.get('voucher_bank_name', original_req_data_from_sheet.get('Bank Name', ''))
    voucher_template_data['voucher_iban'] = form_data_from_html_form.get('voucher_iban', original_req_data_from_sheet.get('IBAN Number', ''))
 
 
-   # Company Logo: Use the logo URL from the hidden input which was derived in edit_voucher_details
-   voucher_template_data['voucher_logo_url'] = form_data_from_html_form.get('voucher_logo_url', '')
+   # Logging the logo URL received from the form
+   logo_url_from_form = form_data_from_html_form.get('voucher_logo_url', '')
+   voucher_template_data['voucher_logo_url'] = logo_url_from_form
+   logging.info(f"Generate Voucher: Received Logo URL from form: '{logo_url_from_form}'")
 
 
-   # Approval Date: Use the one from the form (hidden input, sourced from sheet initially)
    voucher_template_data['approval_date'] = form_data_from_html_form.get('approval_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
-
-
-   # Item Details
    try:
        voucher_template_data['items_for_loop'] = []
-       for i in range(1, 6): # Max 5 items as per voucher_edit_form.html
+       for i in range(1, 6):
            item_name = form_data_from_html_form.get(f'item_{i}_name', '').strip()
-           if item_name: # Only add if item name is present
-               item_desc = form_data_from_html_form.get(f'item_{i}_description', item_name).strip() # Default desc to name
+           if item_name:
+               item_desc = form_data_from_html_form.get(f'item_{i}_description', item_name).strip()
                item_qty_str = form_data_from_html_form.get(f'item_{i}_quantity', '0')
                item_rate_str = form_data_from_html_form.get(f'item_{i}_rate', '0')
                item_amount_str = form_data_from_html_form.get(f'item_{i}_amount', '0')
@@ -2284,19 +2275,16 @@ def generate_voucher_route():
                    'rate': float(item_rate_str) if item_rate_str else 0,
                    'amount': float(item_amount_str) if item_amount_str else 0
                })
-       # If no items were parsed from form but original request had description/amount, create one item line
        if not voucher_template_data['items_for_loop'] and original_req_data_from_sheet.get('Description'):
            voucher_template_data['items_for_loop'].append({
-               'name': original_req_data_from_sheet.get('Description', 'N/A'), # Use original description as item name
+               'name': original_req_data_from_sheet.get('Description', 'N/A'),
                'description': original_req_data_from_sheet.get('Description', 'N/A'),
                'quantity': float(original_req_data_from_sheet.get('Quantity', 1)),
                'rate': float(original_req_data_from_sheet.get('Amount', 0)) / (float(original_req_data_from_sheet.get('Quantity', 1)) or 1),
                'amount': float(original_req_data_from_sheet.get('Amount', 0))
            })
-       elif not voucher_template_data['items_for_loop']: # Fallback if absolutely no items
+       elif not voucher_template_data['items_for_loop']:
             voucher_template_data['items_for_loop'].append({'name': 'N/A', 'description': 'N/A', 'quantity': 0, 'rate': 0, 'amount': 0})
-
-
 
 
        voucher_total_amount_str = form_data_from_html_form.get('voucher_total_amount', '0')
@@ -2306,17 +2294,14 @@ def generate_voucher_route():
        return jsonify({"success": False, "message": "Invalid numeric value for item quantity, rate, or amount."}), 400
 
 
-   # Currency for total display (symbol)
-   voucher_template_data['voucher_currency_for_total'] = form_data_from_html_form.get('voucher_currency_for_total', 'Rs.') # From form
+   voucher_template_data['voucher_currency_for_total'] = form_data_from_html_form.get('voucher_currency_for_total', 'Rs.')
 
 
-   # Signatories
-   sheets_service = build('sheets', 'v4', credentials=creds) # For Sheet2
+   sheets_service = build('sheets', 'v4', credentials=creds)
    approver_data_sheet2 = get_approver_signatures_from_sheet(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
    SIG_IMG_HTML_STYLE = 'max-width:100px; max-height:40px; object-fit:contain;'
 
 
-   # Prepared By
    selected_prepared_by_name = form_data_from_html_form.get('prepared_by_name_selected', original_req_data_from_sheet.get('Name', 'N/A'))
    voucher_template_data['prepared_by_name_selected'] = selected_prepared_by_name
    prepared_by_sig_url = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(selected_prepared_by_name, "")
@@ -2324,22 +2309,18 @@ def generate_voucher_route():
    voucher_template_data['prepared_by_signature_html'] = f'<img src="data:{prepared_by_mime};base64,{prepared_by_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if prepared_by_sig_b64 else ""
 
 
-   # Finance Review
    finance_review_name_on_form = form_data_from_html_form.get('finance_review_name', '').strip()
    voucher_template_data['finance_review_name'] = finance_review_name_on_form if finance_review_name_on_form else approver_data_sheet2.get('finance_review_name_default', 'N/A')
-   finance_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['finance_review_name'], approver_data_sheet2.get('finance_review_signature_url', '')) # Try mapping first, then default
+   finance_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['finance_review_name'], approver_data_sheet2.get('finance_review_signature_url', ''))
    finance_sig_b64, finance_mime, _ = get_signature_data_from_url(finance_sig_url_to_use)
    voucher_template_data['finance_signature_html'] = f'<img src="data:{finance_mime};base64,{finance_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if finance_sig_b64 else ""
 
 
-   # Approved By
-   approved_by_name_on_form = form_data_from_html_form.get('approved_by_name', '').strip() # This is readonly, from original approval type
+   approved_by_name_on_form = form_data_from_html_form.get('approved_by_name', '').strip()
    voucher_template_data['approved_by_name'] = approved_by_name_on_form if approved_by_name_on_form else approver_data_sheet2.get('approved_by_name_default', 'N/A')
    approved_by_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['approved_by_name'], approver_data_sheet2.get('approved_by_signature_url', ''))
    approved_by_sig_b64, approved_by_mime, _ = get_signature_data_from_url(approved_by_sig_url_to_use)
    voucher_template_data['approved_by_signature_html'] = f'<img src="data:{approved_by_mime};base64,{approved_by_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if approved_by_sig_b64 else ""
-
-
 
 
    env = Environment(loader=FileSystemLoader('templates'), cache_size=0, auto_reload=True)
@@ -2349,8 +2330,8 @@ def generate_voucher_route():
 
    voucher_only_pdf_bytes = None
    merged_pdf_bytes = None
-   final_merged_pdf_url = None
-   # temp_dir = tempfile.mkdtemp(prefix='voucher_gen_') # Not needed if not saving voucher-only PDF locally
+   final_merged_pdf_view_link = None # Capture view link for dashboard JS
+   final_merged_pdf_content_link = None # Capture content link for sheet storage
 
 
    try:
@@ -2370,7 +2351,6 @@ def generate_voucher_route():
            return jsonify({"success": False, "message": "Failed to generate voucher-only PDF content (empty)."}), 500
 
 
-       # Merge with Original Request PDF
        merger = PdfMerger()
        merger.append(BytesIO(voucher_only_pdf_bytes))
 
@@ -2379,11 +2359,11 @@ def generate_voucher_route():
        if original_request_pdf_drive_link and ("drive.google.com" in original_request_pdf_drive_link or re.match(r'^[a-zA-Z0-9_-]{25,}$', original_request_pdf_drive_link)):
            try:
                logging.info(f"Downloading original request PDF from Drive: {original_request_pdf_drive_link}")
+               # Use download_drive_file_bytes for original request PDF as well
                downloaded_request_pdf_bytes = download_drive_file_bytes(original_request_pdf_drive_link, creds)
                merger.append(BytesIO(downloaded_request_pdf_bytes))
            except Exception as e:
                logging.warning(f"Could not download/append original request PDF ({original_request_pdf_drive_link}) to voucher: {e}", exc_info=True)
-               # Decide if this is critical. For now, we proceed with voucher-only if original fails.
        else:
            logging.warning(f"Original request PDF link missing, invalid, or not a Drive link: {original_request_pdf_drive_link}. Voucher will not include it.")
 
@@ -2395,47 +2375,56 @@ def generate_voucher_route():
 
 
        merged_pdf_filename = f'Voucher_Merged_{request_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
-       final_merged_pdf_url = upload_file_from_bytes(
+       # Capture both links from upload_file_from_bytes
+       final_merged_pdf_view_link, final_merged_pdf_content_link = upload_file_from_bytes(
            file_content=merged_pdf_bytes,
            file_name=merged_pdf_filename,
            mime_type='application/pdf'
        )
-       if not final_merged_pdf_url:
-           return jsonify({"success": False, "message": "Failed to upload merged voucher PDF to Drive"}), 500
+       
+       # Determine which URL to store in the sheet for download
+       final_merged_pdf_url_to_store = final_merged_pdf_content_link # Prioritize content link
+       if not final_merged_pdf_url_to_store:
+           final_merged_pdf_url_to_store = final_merged_pdf_view_link # Fallback to view link
+           if not final_merged_pdf_url_to_store:
+               logging.error(f"Failed to get any valid URL for {merged_pdf_filename} after upload.")
+               return jsonify({"success": False, "message": "Failed to upload merged voucher PDF to Drive (no valid link returned)"}), 500
+           logging.warning(f"No webContentLink for {merged_pdf_filename}, falling back to webViewLink for sheet storage.")
 
 
-       # Update Sheet1 with the voucher link and generation timestamp
+       logging.info(f"Generate Voucher: Logo URL passed to voucher_template.html: '{voucher_template_data['voucher_logo_url']}'")
+
+
        updated_sheet, update_msg = update_sheet_status(
            request_id,
-           voucher_link=final_merged_pdf_url,
+           voucher_link=final_merged_pdf_url_to_store, # Store the direct download link if possible
            voucher_generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-           voucher_approved_by="",  # Cleared when voucher is generated
+           voucher_approved_by="",
            voucher_rejection_reason="",
-           voucher_prepared_by=selected_prepared_by_name  # This correctly updates the sheet
+           voucher_prepared_by=selected_prepared_by_name
        )
 
 
        if not updated_sheet:
            logging.error(f"Failed to update sheet with voucher link for Request ID {request_id}: {update_msg}")
-           # This is problematic: voucher generated and uploaded, but sheet not updated.
-           # Consider how to handle this (e.g., manual alert).
            return jsonify({"success": False, "message": f"Voucher generated, but failed to update sheet: {update_msg}. Manual check required."}), 500
 
 
-       logging.info(f"Successfully generated, merged, and uploaded voucher for {request_id}. Final PDF URL: {final_merged_pdf_url}")
-       return jsonify({"success": True, "voucher_url": final_merged_pdf_url, "request_id": request_id})
+       logging.info(f"Successfully generated, merged, and uploaded voucher for {request_id}. Final PDF URL stored: {final_merged_pdf_url_to_store}. View Link for dashboard: {final_merged_pdf_view_link}")
+       # The dashboard should use the view link for opening in browser
+       return jsonify({"success": True, "voucher_url": final_merged_pdf_view_link, "request_id": request_id})
 
 
-   except HttpError as e: # Google API errors
+   except HttpError as e:
        logging.error(f"Google API HttpError in generate_voucher_route: {e.resp.status} - {e._get_reason()}", exc_info=True)
        return jsonify({"success": False, "message": f"Google API Error: {e._get_reason()}"}), 500
-   except ValueError as ve: # Type conversion errors
+   except ValueError as ve:
        logging.error(f"ValueError in generate_voucher_route: {ve}", exc_info=True)
        return jsonify({"success": False, "message": str(ve)}), 400
-   except Exception as e: # Other unexpected errors
+   except Exception as e:
        import traceback
        logging.error(f"Unexpected error in generate_voucher_route: {traceback.format_exc()}")
-       return jsonify({"success": False, "message": f"An unexpected server error occurred: {str(e)}"}), 500
+       return jsonify({"success": False, "message": f"An unexpected server error occurred: {str(e)}"}), 500s
 
 
 if __name__ == '__main__':
