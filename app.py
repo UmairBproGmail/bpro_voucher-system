@@ -358,42 +358,71 @@ def upload_file_from_path(file_path, file_name, mime_type):
 
 def upload_file_from_bytes(file_content, file_name, mime_type, file_id_to_update=None):
    creds = get_credentials()
-   if not creds: logging.error("Cannot upload from bytes: No credentials."); return None
+   if not creds:
+       logging.error("Cannot upload from bytes: No credentials.")
+       return None, None # Ensure 2 Nones are always returned here
+
+   # Create media object once, outside the if/else for file_id_to_update
+   media = MediaIoBaseUpload(io.BytesIO(file_content), mimetype=mime_type, resumable=True)
+
    try:
        drive_service = build('drive', 'v3', credentials=creds)
-       media = MediaIoBaseUpload(io.BytesIO(file_content), mimetype=mime_type, resumable=True)
+       
+       file_id = None
+       web_view_link = None
+       web_content_link = None # Key for direct download
+
        if file_id_to_update:
            logging.info(f"Updating Drive file ID: {file_id_to_update}...")
-           updated_file = drive_service.files().update(fileId=file_id_to_update, media_body=media,
-                                                       fields='id,webViewLink,name').execute()
-           file_id = updated_file.get('id');
-           web_view_link = updated_file.get('webViewLink');
+           updated_file = drive_service.files().update(
+               fileId=file_id_to_update, 
+               media_body=media,
+               fields='id,webViewLink,webContentLink,name'
+           ).execute()
+           file_id = updated_file.get('id')
+           web_view_link = updated_file.get('webViewLink')
+           web_content_link = updated_file.get('webContentLink')
            updated_name = updated_file.get('name')
-           logging.info(f"Drive file ID {file_id_to_update} updated. Name: {updated_name}, Link: {web_view_link}")
+           logging.info(f"Drive file ID {file_id_to_update} updated. Name: {updated_name}, View Link: {web_view_link}, Content Link: {web_content_link}")
        else:
            file_metadata = {'name': file_name, 'parents': [GOOGLE_DRIVE_FOLDER_ID]}
            logging.info(
                f"Creating new Drive file: {file_name} (MIME: {mime_type}) in folder: {GOOGLE_DRIVE_FOLDER_ID}")
-           uploaded_file = drive_service.files().create(body=file_metadata, media_body=media,
-                                                        fields='id,webViewLink').execute()
-           file_id = uploaded_file.get('id');
+           uploaded_file = drive_service.files().create(
+               body=file_metadata, 
+               media_body=media,
+               fields='id,webViewLink,webContentLink'
+           ).execute()
+           file_id = uploaded_file.get('id')
            web_view_link = uploaded_file.get('webViewLink')
-           if not file_id: logging.error(f"Drive file creation failed (bytes): {file_name}"); return None
+           web_content_link = uploaded_file.get('webContentLink')
+           if not file_id:
+               logging.error(f"Drive file creation failed (bytes): {file_name}")
+               return None, None # Ensure 2 Nones are always returned here
+
+           # Attempt to set public permission. This is where the 403 happens.
            try:
                permission = {'type': 'anyone', 'role': 'reader'}
                drive_service.permissions().create(fileId=file_id, body=permission, fields='id').execute()
                logging.info(f"Set public permission for new file ID: {file_id}")
            except HttpError as error:
+               # This warning is correctly logged, but the function still proceeds.
+               # The issue is the permission itself, not the code.
                logging.warning(f"Could not set public permission for {file_id}: {error}", exc_info=True)
-       logging.info(f"Uploaded/Updated file from bytes. ID: {file_id}, Link: {web_view_link}")
-       return web_view_link
+           except Exception as e: # Catch other potential errors during permission setting
+               logging.error(f"Error setting public permission for {file_id}: {e}", exc_info=True)
+       
+       # Always return both links at the end of the try block
+       logging.info(f"Uploaded/Created file from bytes. ID: {file_id}, View Link: {web_view_link}, Content Link: {web_content_link}")
+       return web_view_link, web_content_link
+
    except HttpError as e:
        logging.error(f"Google API HttpError during file upload/update: {e.resp.status} - {e._get_reason()}",
                      exc_info=True)
-       return None
+       return None, None # Always return 2 Nones on error
    except Exception as e:
-       logging.error(f"Error uploading/updating from bytes: {e}", exc_info=True);
-       return None
+       logging.error(f"Error uploading/updating from bytes: {e}", exc_info=True)
+       return None, None # Always return 2 Nones on error
 
 
 
