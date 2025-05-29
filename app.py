@@ -126,20 +126,21 @@ EMAIL_SMTP_PORT = 587
 
 # Company Logos
 COMPANY_LOGOS = {
-    "ML-1": "https://i.ibb.co/dwBCbbSs/machine-learning-1-logo.jpg",
-    "Mpro": "https://i.ibb.co/ymjZ22Pb/Market-Pro-Logo.png",
-    "Enlatics": "https://i.ibb.co/ymvw2Pg5/Enlatics-Logo.png",
-    "DS": "https://i.ibb.co/bR1Q6vF8/Developers-Studio-Logo.png",
-    "CS": "https://i.ibb.co/BbfNGsR/Cappersoft-Logo.png",
-    "HRB": "https://i.ibb.co/MyTSFfmp/HRB-Logo.png",
-    "Peace": "https://i.ibb.co/tMc956nm/peace-logo.jpg",
-    "Zoompay": "https://i.ibb.co/dwg2SGHz/Zoom-Pay-Logo.png",
-    "AML Watcher": "https://i.ibb.co/pjdSs1dX/AML-Watcher-Logo.png",
-    "Bpro": "https://i.ibb.co/R4739SnZ/bpro-ai-logo.jpg",
-    "Facia": "https://i.ibb.co/RTFpHX33/Facia-Logo.png",
-    "the kyb": "https://i.ibb.co/fYF8h8Wn/The-KYB-Logo.png",
-    "Kyc/Aml": "https://i.ibb.co/7dKFhKBm/KYC-AML-Guide-Logo.png",
-    "Techub": "https://i.ibb.co/nsY802w3/Techub-Logo.png",
+    "ML-1": "/static/images/machine-learning-1-logo.jpg",
+    "Mpro": "/static/images/Market-Pro-Logo.png",
+    "Enlatics": "/static/images/Enlatics-Logo.png",
+    "DS": "/static/images/Developers-Studio-Logo.png",
+    "CS": "/static/images/Cappersoft-Logo.png",
+    "HRB": "/static/images/HRB-Logo.png",
+    "Peace": "/static/images/peace-logo.jpg",
+    "Zoompay": "/static/images/Zoom-Pay-Logo.png",
+    "AML Watcher": "/static/images/AML-Watcher-Logo.png",
+    "Bpro": "/static/images/bpro-ai-logo.jpg",
+    "Facia": "/static/images/Facia-Logo.png",
+    "The KYB": "/static/images/The-KYB-Logo.png",
+    "KYC/AML": "/static/images/KYC-AML-Guide-Logo.png",
+    "Techub": "/static/images/Techub-Logo.png",
+    "SAK Partners": "/static/images/SAK-Logo.png"
 }
 
 
