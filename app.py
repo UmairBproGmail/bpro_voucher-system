@@ -2424,7 +2424,7 @@ def generate_voucher_route():
    except Exception as e:
        import traceback
        logging.error(f"Unexpected error in generate_voucher_route: {traceback.format_exc()}")
-       return jsonify({"success": False, "message": f"An unexpected server error occurred: {str(e)}"}), 500s
+       return jsonify({"success": False, "message": f"An unexpected server error occurred: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
