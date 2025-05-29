@@ -1,296 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <title>Payment Voucher</title>
-   <!-- Add Inter font from Google Fonts CDN -->
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap">
-   <style>
-       body { font-family: 'Inter', Arial, sans-serif; margin: 20px; font-size: 10pt; line-height: 1.3; }
-       .voucher-container { max-width: 800px; margin: 0 auto; }
-       .voucher-header { margin-bottom: 12px; overflow: auto; }
-       .voucher-title {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           font-size: 18pt;
-           margin-bottom: 4px;
-           text-align: center;
-           color: #333;
-       }
-       .voucher-number {
-           font-family: 'Inter', Arial, sans-serif;
-           text-align: right;
-           margin-bottom: 12px;
-           font-size: 9pt;
-           color: #555;
-       }
-       .logo { width: 100px; height: auto; object-fit: contain; float: right; margin-right:650px; margin-top: 30px;}
-       .field-row { display: flex; align-items: center; margin-bottom: 6px; font-size: 9pt; }
-       .field-row .label-text {
-           font-family: 'Inter', Arial, sans-serif;
-           width: 100px;
-           font-weight: bold;
-           color: #444;
-       }
-       .field-row .value-display, .field-row .checkbox-like {
-           font-family: 'Inter', Arial, sans-serif;
-           border: 1px solid #bbb;
-           background: #f9f9f9;
-           padding: 2px 6px;
-           min-width: 90px;
-           margin-right: 12px;
-       }
-       .checkbox-like {
-           font-family: 'Inter', Arial, sans-serif;
-           display: inline-block;
-           min-width: 18px;
-           text-align: center;
-           font-weight: bold;
-       }
-       .section-title {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           margin: 18px 0 5px 0;
-           font-size: 11pt;
-           color: #333;
-           border-bottom: 1px solid #eee;
-           padding-bottom: 3px;
-       }
-       .sub-section-title {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           margin: 10px 0 3px 0;
-           font-size: 9pt;
-           color: #444;
-       }
-       .account-details-table, .items-table {
-           width: 100%;
-           border-collapse: collapse;
-           margin-bottom: 12px;
-           font-size: 9pt;
-           font-family: 'Inter', Arial, sans-serif;
-       }
-       .account-details-table td, .account-details-table th,
-       .items-table td, .items-table th {
-           border: 1px solid #ccc;
-           padding: 3px 5px;
-           word-break: break-word;
-           vertical-align: top;
-           font-family: 'Inter', Arial, sans-serif;
-       }
-       .account-details-table th { width: 110px; background: #f0f0f0; text-align: left; font-weight:normal; color:#555}
-       .items-table th { background: #f0f0f0; text-align: left; font-weight:normal; color:#555;}
-       .items-table tfoot td {
-           font-weight: bold;
-           background: #e8e8e8;
-           text-align: right;
-           border-top: 1.5px solid #aaa;
-           padding: 4px 5px;
-       }
-       /* --- Approval section using table for PDF stability --- */
-       .approval-section-table {
-           margin-top: 30px;
-           width: 100%;
-           font-family: 'Inter', Arial, sans-serif;
-       }
-       .approval-table {
-           width: 100%;
-           border-collapse: collapse;
-           table-layout: fixed;
-           font-family: 'Inter', Arial, sans-serif;
-       }
-       .approval-table td {
-           width: 33.3%;
-           border: 1px solid #ddd;
-           padding: 8px;
-           vertical-align: top;
-           text-align: center;
-           box-sizing: border-box;
-       }
-       .approval-table .review-title {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           margin-bottom: 3px;
-           font-size: 10pt;
-           text-align: center;
-           color: #333;
-       }
-       .approval-table .signature-image-container {
-           height: 40px;
-           display: flex;
-           justify-content: center;
-           align-items: center;
-           border-bottom: 1px solid #555;
-           margin-bottom: 3px;
-           overflow: hidden;
-       }
-       .approval-table .signature-image-container img {
-           max-width: 100%;
-           max-height: 100%;
-           object-fit: contain;
-       }
-       .approval-table .approval-label {
-           font-family: 'Inter', Arial, sans-serif;
-           display: block;
-           font-size: 8pt;
-           margin-bottom: 4px;
-           color: #555;
-           font-weight: bold;
-       }
-       .approval-table .name-value-display {
-           font-family: 'Inter', Arial, sans-serif;
-           font-size: 9pt;
-           min-height: 15px;
-           padding-top: 2px;
-           color: #333;
-       }
-       .total-amount-display {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           font-size: 11pt;
-           margin-top: 6px;
-           text-align: right;
-           color: #222;
-       }
-       /* Divider with title */
-       .divider-with-title {
-           width: 100%;
-           text-align: center;
-           border-top: 1px solid #888;
-           margin: 18px 0 18px 0;
-           position: relative;
-           height: 0;
-       }
-       .divider-with-title .divider-title {
-           font-family: 'Inter', Arial, sans-serif;
-           font-weight: bold;
-           font-size: 12pt;
-           background: #fff;
-           padding: 0 18px;
-           position: relative;
-           top: -0.7em;
-           color: #222;
-           display: inline-block;
-       }
-       .empty-cell { color: #aaa; font-style: italic; }
-       td { min-height: 1.2em; }
-   </style>
+  <meta charset="UTF-8">
+  <title>Payment Voucher</title>
+  <!-- Add Inter font from Google Fonts CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap">
+  <style>
+      body { font-family: 'Inter', Arial, sans-serif; margin: 20px; font-size: 10pt; line-height: 1.3; }
+      .voucher-container { max-width: 800px; margin: 0 auto; }
+      .voucher-header { margin-bottom: 12px; overflow: auto; }
+      .voucher-title {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          font-size: 18pt;
+          margin-bottom: 4px;
+          text-align: center;
+          color: #333;
+      }
+      .voucher-number {
+          font-family: 'Inter', Arial, sans-serif;
+          text-align: right;
+          margin-bottom: 12px;
+          font-size: 9pt;
+          color: #555;
+      }
+      .logo { width: 100px; height: auto; object-fit: contain; float: right; margin-right:650px; margin-top: 30px;}
+      .field-row { display: flex; align-items: center; margin-bottom: 6px; font-size: 9pt; }
+      .field-row .label-text {
+          font-family: 'Inter', Arial, sans-serif;
+          width: 100px;
+          font-weight: bold;
+          color: #444;
+      }
+      .field-row .value-display, .field-row .checkbox-like {
+          font-family: 'Inter', Arial, sans-serif;
+          border: 1px solid #bbb;
+          background: #f9f9f9;
+          padding: 2px 6px;
+          min-width: 90px;
+          margin-right: 12px;
+      }
+      .checkbox-like {
+          font-family: 'Inter', Arial, sans-serif;
+          display: inline-block;
+          min-width: 18px;
+          text-align: center;
+          font-weight: bold;
+      }
+      .section-title {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          margin: 18px 0 5px 0;
+          font-size: 11pt;
+          color: #333;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 3px;
+      }
+      .sub-section-title {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          margin: 10px 0 3px 0;
+          font-size: 9pt;
+          color: #444;
+      }
+      .account-details-table, .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 12px;
+          font-size: 9pt;
+          font-family: 'Inter', Arial, sans-serif;
+      }
+      .account-details-table td, .account-details-table th,
+      .items-table td, .items-table th {
+          border: 1px solid #ccc;
+          padding: 3px 5px;
+          word-break: break-word;
+          vertical-align: top;
+          font-family: 'Inter', Arial, sans-serif;
+      }
+      .account-details-table th { width: 110px; background: #f0f0f0; text-align: left; font-weight:normal; color:#555}
+      .items-table th { background: #f0f0f0; text-align: left; font-weight:normal; color:#555;}
+      .items-table tfoot td {
+          font-weight: bold;
+          background: #e8e8e8;
+          text-align: right;
+          border-top: 1.5px solid #aaa;
+          padding: 4px 5px;
+      }
+      /* --- Approval section using table for PDF stability --- */
+      .approval-section-table {
+          margin-top: 30px;
+          width: 100%;
+          font-family: 'Inter', Arial, sans-serif;
+      }
+      .approval-table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+          font-family: 'Inter', Arial, sans-serif;
+      }
+      .approval-table td {
+          width: 33.3%;
+          border: 1px solid #ddd;
+          padding: 8px;
+          vertical-align: top;
+          text-align: center;
+          box-sizing: border-box;
+      }
+      .approval-table .review-title {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          margin-bottom: 3px;
+          font-size: 10pt;
+          text-align: center;
+          color: #333;
+      }
+      .approval-table .signature-image-container {
+          height: 40px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-bottom: 1px solid #555;
+          margin-bottom: 3px;
+          overflow: hidden;
+      }
+      .approval-table .signature-image-container img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+      }
+      .approval-table .approval-label {
+          font-family: 'Inter', Arial, sans-serif;
+          display: block;
+          font-size: 8pt;
+          margin-bottom: 4px;
+          color: #555;
+          font-weight: bold;
+      }
+      .approval-table .name-value-display {
+          font-family: 'Inter', Arial, sans-serif;
+          font-size: 9pt;
+          min-height: 15px;
+          padding-top: 2px;
+          color: #333;
+      }
+      .total-amount-display {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          font-size: 11pt;
+          margin-top: 6px;
+          text-align: right;
+          color: #222;
+      }
+      /* Divider with title */
+      .divider-with-title {
+          width: 100%;
+          text-align: center;
+          border-top: 1px solid #888;
+          margin: 18px 0 18px 0;
+          position: relative;
+          height: 0;
+      }
+      .divider-with-title .divider-title {
+          font-family: 'Inter', Arial, sans-serif;
+          font-weight: bold;
+          font-size: 12pt;
+          background: #fff;
+          padding: 0 18px;
+          position: relative;
+          top: -0.7em;
+          color: #222;
+          display: inline-block;
+      }
+      .empty-cell { color: #aaa; font-style: italic; }
+      td { min-height: 1.2em; }
+  </style>
 </head>
 <body>
 <div class="voucher-container">
-   <div class="voucher-header">
-       {% if voucher_data_from_form.voucher_logo_url and voucher_data_from_form.voucher_logo_url != 'None' and voucher_data_from_form.voucher_logo_url.strip() %}
-       <img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Logo" class="logo">
-       {% endif %}
-       <div class="voucher-title">PAYMENT VOUCHER</div>
-       <div class="voucher-number">
-           Voucher No. {{ voucher_data_from_form.request_id }}<br>
-           Dated: {{ voucher_data_from_form.approval_date.split()[0] if voucher_data_from_form.approval_date else 'N/A' }}
-       </div>
-   </div>
+  <div class="voucher-header">
+      {% if voucher_data_from_form.voucher_logo_url and voucher_data_from_form.voucher_logo_url != 'None' and voucher_data_from_form.voucher_logo_url.strip() %}
+      <img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Logo" class="logo">
+      {% endif %}
+      <div class="voucher-title">PAYMENT VOUCHER</div>
+      <div class="voucher-number">
+          Voucher No. {{ voucher_data_from_form.request_id }}<br>
+          Dated: {{ voucher_data_from_form.approval_date.split()[0] if voucher_data_from_form.approval_date else 'N/A' }}
+      </div>
+  </div>
 
-   <div class="section-title">Payment Details</div>
-   <div class="field-row">
-       <span class="label-text">Payment Type:</span>
-       <span class="value-display">{{ voucher_data_from_form.voucher_payment_type }}</span>
-   </div>
-   <div class="field-row">
-       <span class="label-text">Payment From:</span>
-       <span class="value-display">{{ voucher_data_from_form.payment_from_bank | default('N/A', true) }}</span>
-   </div>
 
-   <div class="sub-section-title">Payee Information</div>
-   <table class="account-details-table">
-       <tr>
-           <th>Account Title:</th>
-           <td>{{ voucher_data_from_form.voucher_account_title | default(' ', true) }}</td>
-           <th>Bank Name:</th>
-           <td>{{ voucher_data_from_form.voucher_bank_name | default(' ', true) }}</td>
-       </tr>
-       <tr>
-           <th>IBAN/Account No:</th>
-           <td>{{ voucher_data_from_form.voucher_iban | default(' ', true) }}</td>
-           <td colspan="2"></td>
-       </tr>
-   </table>
+  <div class="section-title">Payment Details</div>
+  <div class="field-row">
+      <span class="label-text">Payment Type:</span>
+      <span class="value-display">{{ voucher_data_from_form.voucher_payment_type }}</span>
+  </div>
+  <div class="field-row">
+      <span class="label-text">Payment From:</span>
+      <span class="value-display">{{ voucher_data_from_form.payment_from_bank | default('N/A', true) }}</span>
+  </div>
 
-   <div class="section-title">Details</div>
-   <table class="items-table">
-       <thead>
-           <tr>
-               <th style="width:5%;">Sr.#</th>
-               <th style="width:25%;">Item Name</th>
-               <th style="width:35%;">Description</th>
-               <th style="width:10%; text-align:right;">Qty</th>
-               <th style="width:10%; text-align:right;">Rate</th>
-               <th style="width:15%; text-align:right;">Amount</th>
-           </tr>
-       </thead>
-       <tbody>
-           {% for item in voucher_data_from_form.items_for_loop %}
-           <tr>
-               <td style="text-align:center;">{{ loop.index }}</td>
-               <td>{{ item.name | default(' ', true) }}</td>
-               <td>{{ item.description | default(' ', true) }}</td>
-               <td style="text-align:right;">{{ "%.2f"|format(item.quantity|float) if item.quantity else '0.00' }}</td>
-               <td style="text-align:right;">{{ "%.2f"|format(item.rate|float) if item.rate else '0.00' }}</td>
-               <td style="text-align:right;">{{ "%.2f"|format(item.amount|float) if item.amount else '0.00' }}</td>
-           </tr>
-           {% endfor %}
-           <!-- Fill remaining rows up to 5 if less than 5 items -->
-           {% for i in range(voucher_data_from_form.items_for_loop|length + 1, 6) %}
-           <tr>
-               <td style="text-align:center;">{{ i }}</td>
-               <td><span class="empty-cell"> </span></td> <td><span class="empty-cell"> </span></td>
-               <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td>
-           </tr>
-           {% endfor %}
-       </tbody>
-        <tfoot>
-           <tr>
-               <td colspan="5">TOTAL</td>
-               <td>{{ voucher_data_from_form.voucher_currency_for_total | default('Rs.', true) }} {{ "%.2f"|format(voucher_data_from_form.voucher_total_amount|float) if voucher_data_from_form.voucher_total_amount else '0.00' }}</td>
-           </tr>
-       </tfoot>
-   </table>
+
+  <div class="sub-section-title">Payee Information</div>
+  <table class="account-details-table">
+      <tr>
+          <th>Account Title:</th>
+          <td>{{ voucher_data_from_form.voucher_account_title | default(' ', true) }}</td>
+          <th>Bank Name:</th>
+          <td>{{ voucher_data_from_form.voucher_bank_name | default(' ', true) }}</td>
+      </tr>
+      <tr>
+          <th>IBAN/Account No:</th>
+          <td>{{ voucher_data_from_form.voucher_iban | default(' ', true) }}</td>
+          <td colspan="2"></td>
+      </tr>
+  </table>
+
+
+  <div class="section-title">Details</div>
+  <table class="items-table">
+      <thead>
+          <tr>
+              <th style="width:5%;">Sr.#</th>
+              <th style="width:25%;">Item Name</th>
+              <th style="width:35%;">Description</th>
+              <th style="width:10%; text-align:right;">Qty</th>
+              <th style="width:10%; text-align:right;">Rate</th>
+              <th style="width:15%; text-align:right;">Amount</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for item in voucher_data_from_form.items_for_loop %}
+          <tr>
+              <td style="text-align:center;">{{ loop.index }}</td>
+              <td>{{ item.name | default(' ', true) }}</td>
+              <td>{{ item.description | default(' ', true) }}</td>
+              <td style="text-align:right;">{{ "%.2f"|format(item.quantity|float) if item.quantity is not none else '0.00' }}</td>
+              <td style="text-align:right;">{{ "%.2f"|format(item.rate|float) if item.rate is not none else '0.00' }}</td>
+              <td style="text-align:right;">{{ "%.2f"|format(item.amount|float) if item.amount is not none else '0.00' }}</td>
+          </tr>
+          {% endfor %}
+          <!-- Fill remaining rows up to 5 if less than 5 items -->
+          {% for i in range(voucher_data_from_form.items_for_loop|length + 1, 6) %}
+          <tr>
+              <td style="text-align:center;">{{ i }}</td>
+              <td><span class="empty-cell"> </span></td> <td><span class="empty-cell"> </span></td>
+              <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td> <td style="text-align:right;"><span class="empty-cell"> </span></td>
+          </tr>
+          {% endfor %}
+      </tbody>
+       <tfoot>
+          <tr>
+              <td colspan="5">TOTAL</td>
+              <td>{{ voucher_data_from_form.voucher_currency_for_total | default('Rs.', true) }} {{ "%.2f"|format(voucher_data_from_form.voucher_total_amount|float) if voucher_data_from_form.voucher_total_amount is not none else '0.00' }}</td>
+          </tr>
+      </tfoot>
+  </table>
 <span style="display:inline-block; width:40px;"></span>
 
-  <!-- Divider with title -->
-  <div class="divider-with-title">
-    <span class="divider-title">Finance Department Activity</span>
-  </div>
 
-  <!-- Approval section, now as a table for PDF stability -->
-  <div class="approval-section-table">
-    <table class="approval-table">
-      <tr>
-        <td>
-          <div class="review-title">Prepared By</div>
-          <div class="signature-image-container">
-            {{ voucher_data_from_form.prepared_by_signature_html | safe }}
-          </div>
-          <div class="approval-label">Name:</div>
-          <div class="name-value-display">{{ voucher_data_from_form.prepared_by_name_selected | default('N/A', true) }}</div>
-        </td>
-        <td>
-          <div class="review-title">Finance Review</div>
-          <div class="signature-image-container">
-            {{ voucher_data_from_form.finance_signature_html | safe }}
-          </div>
-          <div class="approval-label">Name:</div>
-          <div class="name-value-display">{{ voucher_data_from_form.finance_review_name | default('N/A', true) }}</div>
-        </td>
-        <td>
-          <div class="review-title">Approved By</div>
-          <div class="signature-image-container">
-            {{ voucher_data_from_form.approved_by_signature_html | safe }}
-          </div>
-          <div class="approval-label">Name:</div>
-          <div class="name-value-display">{{ voucher_data_from_form.approved_by_name | default('N/A', true) }}</div>
-        </td>
-      </tr>
-    </table>
-  </div>
+ <!-- Divider with title -->
+ <div class="divider-with-title">
+   <span class="divider-title">Finance Department Activity</span>
+ </div>
+
+
+ <!-- Approval section, now as a table for PDF stability -->
+ <div class="approval-section-table">
+   <table class="approval-table">
+     <tr>
+       <td>
+         <div class="review-title">Prepared By</div>
+         <div class="signature-image-container">
+           {{ voucher_data_from_form.prepared_by_signature_html | safe }}
+         </div>
+         <div class="approval-label">Name:</div>
+         <div class="name-value-display">{{ voucher_data_from_form.prepared_by_name_selected | default('N/A', true) }}</div>
+       </td>
+       <td>
+         <div class="review-title">Finance Review</div>
+         <div class="signature-image-container">
+           {{ voucher_data_from_form.finance_signature_html | safe }}
+         </div>
+         <div class="approval-label">Name:</div>
+         <div class="name-value-display">{{ voucher_data_from_form.finance_review_name | default('N/A', true) }}</div>
+       </td>
+       <td>
+         <div class="review-title">Approved By</div>
+         <div class="signature-image-container">
+           {{ voucher_data_from_form.approved_by_signature_html | safe }}
+         </div>
+         <div class="approval-label">Name:</div>
+         <div class="name-value-display">{{ voucher_data_from_form.approved_by_name | default('N/A', true) }}</div>
+       </td>
+     </tr>
+   </table>
+ </div>
 </div>
 </body>
 </html>
