@@ -58,28 +58,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 app = Flask(__name__)
 app.secret_key = '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'
 
-GOOGLE_CLIENT_SECRETS_ENV = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-CLIENT_SECRETS_FILE = 'credentials.json' # Default local path
 
-if GOOGLE_CLIENT_SECRETS_ENV:
-    # If running on Render or other environment where variable is set,
-    # write the JSON content to a temporary file.
-    # Use tempfile to ensure cleanup (though Render's ephemeral filesystem helps too)
-    try:
-        temp_dir = tempfile.gettempdir()
-        temp_credentials_path = os.path.join(temp_dir, CLIENT_SECRETS_FILE)
-        with open(temp_credentials_path, "w") as f:
-            f.write(GOOGLE_CLIENT_SECRETS_ENV)
-        CLIENT_SECRETS_FILE = temp_credentials_path
-        logging.info(f"Using credentials from environment variable, written to temporary file: {CLIENT_SECRETS_FILE}")
-    except Exception as e:
-        logging.error(f"Failed to write credentials.json from environment variable: {e}", exc_info=True)
-        # Fallback to local file path if temp write fails, but this might not work on Render
-        CLIENT_SECRETS_FILE = 'credentials.json'
-        logging.warning("Falling back to 'credentials.json' directly. This might fail on Render if file is missing.")
-else:
-    logging.info("GOOGLE_CREDENTIALS_JSON environment variable not found. Attempting to load 'credentials.json' from local directory.")
-   
 # Configuration
 GOOGLE_DRIVE_FOLDER_ID = "1B62aXBQwjH8-ZOwWfJt-d5YPiq7Z2exN"
 GOOGLE_SHEETS_SPREADSHEET_ID = "1tGqhzBaEwGEh9Vq7GW-toGiO-hW25Sc4sjv4Nct9SqQ"
@@ -291,9 +270,7 @@ def allowed_file(filename):
 
 
 def get_google_auth_flow():
-   # Use the dynamically determined CLIENT_SECRETS_FILE path
-   return Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=url_for('oauth2callback', _external=True))
-
+   return Flow.from_client_secrets_file('credentials.json', scopes=SCOPES, redirect_uri=url_for('oauth2callback', _external=True))
 
 
 
@@ -359,71 +336,42 @@ def upload_file_from_path(file_path, file_name, mime_type):
 
 def upload_file_from_bytes(file_content, file_name, mime_type, file_id_to_update=None):
    creds = get_credentials()
-   if not creds:
-       logging.error("Cannot upload from bytes: No credentials.")
-       return None, None # Ensure 2 Nones are always returned here
-
-   # Create media object once, outside the if/else for file_id_to_update
-   media = MediaIoBaseUpload(io.BytesIO(file_content), mimetype=mime_type, resumable=True)
-
+   if not creds: logging.error("Cannot upload from bytes: No credentials."); return None
    try:
        drive_service = build('drive', 'v3', credentials=creds)
-       
-       file_id = None
-       web_view_link = None
-       web_content_link = None # Key for direct download
-
+       media = MediaIoBaseUpload(io.BytesIO(file_content), mimetype=mime_type, resumable=True)
        if file_id_to_update:
            logging.info(f"Updating Drive file ID: {file_id_to_update}...")
-           updated_file = drive_service.files().update(
-               fileId=file_id_to_update, 
-               media_body=media,
-               fields='id,webViewLink,webContentLink,name'
-           ).execute()
-           file_id = updated_file.get('id')
-           web_view_link = updated_file.get('webViewLink')
-           web_content_link = updated_file.get('webContentLink')
+           updated_file = drive_service.files().update(fileId=file_id_to_update, media_body=media,
+                                                       fields='id,webViewLink,name').execute()
+           file_id = updated_file.get('id');
+           web_view_link = updated_file.get('webViewLink');
            updated_name = updated_file.get('name')
-           logging.info(f"Drive file ID {file_id_to_update} updated. Name: {updated_name}, View Link: {web_view_link}, Content Link: {web_content_link}")
+           logging.info(f"Drive file ID {file_id_to_update} updated. Name: {updated_name}, Link: {web_view_link}")
        else:
            file_metadata = {'name': file_name, 'parents': [GOOGLE_DRIVE_FOLDER_ID]}
            logging.info(
                f"Creating new Drive file: {file_name} (MIME: {mime_type}) in folder: {GOOGLE_DRIVE_FOLDER_ID}")
-           uploaded_file = drive_service.files().create(
-               body=file_metadata, 
-               media_body=media,
-               fields='id,webViewLink,webContentLink'
-           ).execute()
-           file_id = uploaded_file.get('id')
+           uploaded_file = drive_service.files().create(body=file_metadata, media_body=media,
+                                                        fields='id,webViewLink').execute()
+           file_id = uploaded_file.get('id');
            web_view_link = uploaded_file.get('webViewLink')
-           web_content_link = uploaded_file.get('webContentLink')
-           if not file_id:
-               logging.error(f"Drive file creation failed (bytes): {file_name}")
-               return None, None # Ensure 2 Nones are always returned here
-
-           # Attempt to set public permission. This is where the 403 happens.
+           if not file_id: logging.error(f"Drive file creation failed (bytes): {file_name}"); return None
            try:
                permission = {'type': 'anyone', 'role': 'reader'}
                drive_service.permissions().create(fileId=file_id, body=permission, fields='id').execute()
                logging.info(f"Set public permission for new file ID: {file_id}")
            except HttpError as error:
-               # This warning is correctly logged, but the function still proceeds.
-               # The issue is the permission itself, not the code.
                logging.warning(f"Could not set public permission for {file_id}: {error}", exc_info=True)
-           except Exception as e: # Catch other potential errors during permission setting
-               logging.error(f"Error setting public permission for {file_id}: {e}", exc_info=True)
-       
-       # Always return both links at the end of the try block
-       logging.info(f"Uploaded/Created file from bytes. ID: {file_id}, View Link: {web_view_link}, Content Link: {web_content_link}")
-       return web_view_link, web_content_link
-
+       logging.info(f"Uploaded/Updated file from bytes. ID: {file_id}, Link: {web_view_link}")
+       return web_view_link
    except HttpError as e:
        logging.error(f"Google API HttpError during file upload/update: {e.resp.status} - {e._get_reason()}",
                      exc_info=True)
-       return None, None # Always return 2 Nones on error
+       return None
    except Exception as e:
-       logging.error(f"Error uploading/updating from bytes: {e}", exc_info=True)
-       return None, None # Always return 2 Nones on error
+       logging.error(f"Error uploading/updating from bytes: {e}", exc_info=True);
+       return None
 
 
 
@@ -1410,56 +1358,67 @@ def index():
 
 @app.route('/authorize')
 def authorize():
-    flow = get_google_auth_flow()
-    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true',
-                                                      prompt='consent')
-    session['state'] = state
-    logging.info("Redirecting to Google authorization URL.")
-    return redirect(authorization_url)
+   flow = get_google_auth_flow()
+   authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true',
+                                                     prompt='consent')
+   session['state'] = state
+   logging.info("Redirecting to Google authorization URL.")
+   return redirect(authorization_url)
+
+
 
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    state = session.pop('state', None)
-    if not state or not request.args.get('state') or state != request.args.get('state'):
-        logging.error("OAuth2 callback: State mismatch or missing.")
-        return 'Invalid state parameter or state missing in request.', 400
+   state = session.pop('state', None)
+   if not state or not request.args.get('state') or state != request.args.get('state'):
+       logging.error("OAuth2 callback: State mismatch or missing.")
+       return 'Invalid state parameter or state missing in request.', 400
 
-    flow = get_google_auth_flow()
-    try:
-        authorization_response = request.url
-        if not authorization_response.startswith("https://"):
-            authorization_response = authorization_response.replace("http://", "https://", 1)
 
-        logging.info(
-            f"Fetching token using authorization response: {authorization_response[:100]}...")
-        flow.fetch_token(authorization_response=authorization_response)
-        credentials = flow.credentials
+   flow = get_google_auth_flow()
+   try:
+       authorization_response = request.url
+       if not authorization_response.startswith("https://"): # Ensure HTTPS for Render
+           authorization_response = authorization_response.replace("http://", "https://", 1)
 
-        if not credentials or not credentials.token:
-            logging.error("OAuth2 callback: Failed to obtain token from Google.")
-            return 'Failed to obtain token from Google. The authorization response might have been invalid or token fetch failed.', 400
 
-        creds_data = {
-            'token': credentials.token, 'refresh_token': credentials.refresh_token,
-            'token_uri': credentials.token_uri, 'client_id': credentials.client_id,
-            'client_secret': credentials.client_secret, 'scopes': credentials.scopes
-        }
-        session['credentials'] = json.dumps(creds_data)
-        logging.info("Successfully obtained and stored credentials in session.")
+       logging.info(
+           f"Fetching token using authorization response: {authorization_response[:100]}...") # Log part of URL for debug
+       flow.fetch_token(authorization_response=authorization_response)
+       credentials = flow.credentials
 
-        try:
-            sheets_service = build('sheets', 'v4', credentials=credentials)
-            ensure_sheet_headers(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
-            logging.info("Ensured sheet headers after successful authentication.")
-        except Exception as e_sheet:
-            logging.error(f"Error ensuring sheet headers after auth: {e_sheet}", exc_info=True)
 
-        return redirect(url_for('index'))
-    except Exception as e:
-        logging.error(f"Error during OAuth2 callback processing: {e}", exc_info=True)
-        session.pop('credentials', None)
-        return 'An error occurred during authentication. Please try authorizing again. Details: ' + str(e), 500
+       if not credentials or not credentials.token:
+           logging.error("OAuth2 callback: Failed to obtain token from Google.")
+           return 'Failed to obtain token from Google. The authorization response might have been invalid or token fetch failed.', 400
+
+
+       creds_data = {
+           'token': credentials.token, 'refresh_token': credentials.refresh_token,
+           'token_uri': credentials.token_uri, 'client_id': credentials.client_id,
+           'client_secret': credentials.client_secret, 'scopes': credentials.scopes
+       }
+       session['credentials'] = json.dumps(creds_data)
+       logging.info("Successfully obtained and stored credentials in session.")
+
+
+       try:
+           sheets_service = build('sheets', 'v4', credentials=credentials)
+           ensure_sheet_headers(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
+           logging.info("Ensured sheet headers after successful authentication.")
+       except Exception as e_sheet:
+           logging.error(f"Error ensuring sheet headers after auth: {e_sheet}", exc_info=True)
+           # Don't fail the whole auth for this, but log it.
+
+
+       return redirect(url_for('index'))
+   except Exception as e:
+       logging.error(f"Error during OAuth2 callback processing: {e}", exc_info=True)
+       session.pop('credentials', None) # Clear potentially bad creds
+       return 'An error occurred during authentication. Please try authorizing again. Details: ' + str(e), 500
+
+
 
 
 @app.route('/logout')
@@ -1472,6 +1431,9 @@ def logout():
    session.pop('current_username', None)
    logging.info("User logged out.")
    return redirect(url_for('index'))
+
+
+
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -2172,10 +2134,11 @@ def error_page():
 
 
 @app.route('/edit_voucher_details/<request_id>')
-@require_auth('dashboard')
+@require_auth('dashboard') # Ensure only authenticated dashboard users can access this
 def edit_voucher_details(request_id):
-   creds = get_credentials()
+   creds = get_credentials() # Already checked by require_auth, but good for direct use if needed
    if not creds:
+       # This should ideally not be hit if require_auth is working
        return "Authentication required.", 401
 
 
@@ -2183,38 +2146,40 @@ def edit_voucher_details(request_id):
    spreadsheet_id = GOOGLE_SHEETS_SPREADSHEET_ID
 
 
+   # Fetch original request data from Sheet1
    original_req_data, err = get_request_by_id(request_id)
    if err or not original_req_data:
        logging.error(f"Error fetching original request data for voucher edit (ID: {request_id}): {err}")
        return f"Error fetching request data for ID '{request_id}': {err or 'Not found'}. Please ensure the request exists and is approved.", 404
 
 
+   # Fetch approver signature data from Sheet2
    approver_data_from_sheet2 = get_approver_signatures_from_sheet(sheets_service, spreadsheet_id)
 
 
-   voucher_form_data = original_req_data.copy()
+   # Prepare data for the voucher_edit_form.html template
+   # Start with original request data and then override/add voucher specific fields
+   voucher_form_data = original_req_data.copy() # Make a copy to avoid modifying original dict
 
 
+   # Default/Derived values for the form
    voucher_form_data.setdefault('Bank Name', voucher_form_data.get('Bank Name', ''))
-   voucher_form_data.setdefault('IBAN', voucher_form_data.get('IBAN Number', ''))
-   voucher_form_data.setdefault('Finance Review', approver_data_from_sheet2.get('finance_review_name_default', 'N/A'))
+   voucher_form_data.setdefault('IBAN', voucher_form_data.get('IBAN Number', '')) # Use IBAN Number for IBAN field
+   voucher_form_data.setdefault('Finance Review', approver_data_from_sheet2.get('finance_review_name_default', 'N/A')) # Default Finance Reviewer Name
 
 
-   company_name_from_request = voucher_form_data.get('Company Name', 'Bpro')
-   # Logging the company name and the URL it tries to retrieve
-   selected_logo_url = COMPANY_LOGOS.get(company_name_from_request, COMPANY_LOGOS.get('Bpro', ''))
-   voucher_form_data['logo_url'] = selected_logo_url
-   logging.info(f"Voucher Edit: Company Name '{company_name_from_request}' resolved to Logo URL: '{selected_logo_url}'")
+   company_name_from_request = voucher_form_data.get('Company Name', 'Bpro') # Default to 'Bpro' if not found
+   voucher_form_data['logo_url'] = COMPANY_LOGOS.get(company_name_from_request, COMPANY_LOGOS.get('Bpro', '')) # Fallback to Bpro logo then empty
 
 
    try:
        amount = float(voucher_form_data.get('Amount', 0))
        quantity = float(voucher_form_data.get('Quantity', 1))
-       if quantity == 0: quantity = 1
+       if quantity == 0: quantity = 1 # Avoid division by zero
        rate = amount / quantity
        voucher_form_data.setdefault('Rate', str(round(rate, 2)))
    except (ValueError, TypeError):
-       voucher_form_data.setdefault('Rate', voucher_form_data.get('Amount', '0'))
+       voucher_form_data.setdefault('Rate', voucher_form_data.get('Amount', '0')) # Fallback for rate
 
 
    currency_symbols = {"PKR": "Rs.", "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "AUD": "A$", "CAD": "C$",
@@ -2226,15 +2191,16 @@ def edit_voucher_details(request_id):
    voucher_form_data.setdefault('Currency_Symbol', currency_symbols.get(voucher_form_data.get('Currency',''), voucher_form_data.get('Currency','')))
 
 
+   # Get the 'Voucher Prepared By' name from the sheet if it exists, otherwise default to original requester name
    voucher_prepared_by_from_sheet = original_req_data['Voucher Prepared By'] if original_req_data.get('Voucher Prepared By') else original_req_data.get('Name', '')
-   voucher_form_data.setdefault('Voucher Prepared By', voucher_prepared_by_from_sheet)
+   voucher_form_data.setdefault('Voucher Prepared By', voucher_prepared_by_from_sheet) # NEW
 
-
-   prepared_by_names_list = list(approver_data_from_sheet2.get('prepared_by_names', []))
+   # Prepare list for "Prepared By" dropdown, ensure original requester and sheet's prepared by are options
+   prepared_by_names_list = list(approver_data_from_sheet2.get('prepared_by_names', [])) # Make a mutable copy
    original_requester_name = voucher_form_data.get('Name', '')
    if original_requester_name and original_requester_name not in prepared_by_names_list:
-       prepared_by_names_list.insert(0, original_requester_name)
-   if voucher_prepared_by_from_sheet and voucher_prepared_by_from_sheet not in prepared_by_names_list:
+       prepared_by_names_list.insert(0, original_requester_name) # Add to start if not present
+   if voucher_prepared_by_from_sheet and voucher_prepared_by_from_sheet not in prepared_by_names_list: # Ensure sheet's prepared by is also an option
        prepared_by_names_list.insert(0, voucher_prepared_by_from_sheet)
 
 
@@ -2243,56 +2209,61 @@ def edit_voucher_details(request_id):
 
 
    return render_template('voucher_edit_form.html',
-                          request_data=voucher_form_data,
+                          request_data=voucher_form_data, # This now contains merged data
                           CEO_APPROVER_NAME=CEO_APPROVER_NAME,
                           STANDARD_APPROVER_NAME=STANDARD_APPROVER_NAME,
-                          prepared_by_names=prepared_by_names_list)
+                          prepared_by_names=prepared_by_names_list) # Pass the curated list
 
 
 @app.route('/generate_voucher', methods=['POST'])
-@require_auth('dashboard')
+@require_auth('dashboard') # Ensure only authenticated dashboard users can access this
 def generate_voucher_route():
-   creds = get_credentials()
+   creds = get_credentials() # Already checked by require_auth
    if not creds:
        return jsonify({"success": False, "message": "Authentication required"}), 401
 
 
-   form_data_from_html_form = request.form
+   form_data_from_html_form = request.form # Data submitted from voucher_edit_form.html
    request_id = form_data_from_html_form.get('request_id')
    if not request_id:
        return jsonify({"success": False, "message": "Missing request_id from form"}), 400
 
 
+   # Fetch original request data to ensure consistency and for fallbacks
    original_req_data_from_sheet, err = get_request_by_id(request_id)
    if err or not original_req_data_from_sheet:
        logging.error(f"Failed to fetch original request data for voucher generation (ID: {request_id}): {err}")
        return jsonify({"success": False, "message": f"Failed to fetch original request data: {err or 'Not found'}"}), 500
 
 
+   # Prepare the data payload for voucher_template.html
+   # Prioritize form data, but use original sheet data for non-editable fields or fallbacks
    voucher_template_data = {}
    voucher_template_data['request_id'] = request_id
-   voucher_template_data['voucher_payment_type'] = original_req_data_from_sheet.get('Payment Type', '')
-   voucher_template_data['payment_from_bank'] = form_data_from_html_form.get('payment_from_bank', '')
+   voucher_template_data['voucher_payment_type'] = original_req_data_from_sheet.get('Payment Type', '') # From sheet
+   voucher_template_data['payment_from_bank'] = form_data_from_html_form.get('payment_from_bank', '') # From form
    voucher_template_data['voucher_account_title'] = form_data_from_html_form.get('voucher_account_title', original_req_data_from_sheet.get('Account Title', ''))
    voucher_template_data['voucher_bank_name'] = form_data_from_html_form.get('voucher_bank_name', original_req_data_from_sheet.get('Bank Name', ''))
    voucher_template_data['voucher_iban'] = form_data_from_html_form.get('voucher_iban', original_req_data_from_sheet.get('IBAN Number', ''))
 
 
-   # Logging the logo URL received from the form
-   logo_url_from_form = form_data_from_html_form.get('voucher_logo_url', '')
-   voucher_template_data['voucher_logo_url'] = logo_url_from_form
-   logging.info(f"Generate Voucher: Received Logo URL from form: '{logo_url_from_form}'")
+   # Company Logo: Use the logo URL from the hidden input which was derived in edit_voucher_details
+   voucher_template_data['voucher_logo_url'] = form_data_from_html_form.get('voucher_logo_url', '')
 
 
+   # Approval Date: Use the one from the form (hidden input, sourced from sheet initially)
    voucher_template_data['approval_date'] = form_data_from_html_form.get('approval_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
+
+
+   # Item Details
    try:
        voucher_template_data['items_for_loop'] = []
-       for i in range(1, 6):
+       for i in range(1, 6): # Max 5 items as per voucher_edit_form.html
            item_name = form_data_from_html_form.get(f'item_{i}_name', '').strip()
-           if item_name:
-               item_desc = form_data_from_html_form.get(f'item_{i}_description', item_name).strip()
+           if item_name: # Only add if item name is present
+               item_desc = form_data_from_html_form.get(f'item_{i}_description', item_name).strip() # Default desc to name
                item_qty_str = form_data_from_html_form.get(f'item_{i}_quantity', '0')
                item_rate_str = form_data_from_html_form.get(f'item_{i}_rate', '0')
                item_amount_str = form_data_from_html_form.get(f'item_{i}_amount', '0')
@@ -2305,16 +2276,19 @@ def generate_voucher_route():
                    'rate': float(item_rate_str) if item_rate_str else 0,
                    'amount': float(item_amount_str) if item_amount_str else 0
                })
+       # If no items were parsed from form but original request had description/amount, create one item line
        if not voucher_template_data['items_for_loop'] and original_req_data_from_sheet.get('Description'):
            voucher_template_data['items_for_loop'].append({
-               'name': original_req_data_from_sheet.get('Description', 'N/A'),
+               'name': original_req_data_from_sheet.get('Description', 'N/A'), # Use original description as item name
                'description': original_req_data_from_sheet.get('Description', 'N/A'),
                'quantity': float(original_req_data_from_sheet.get('Quantity', 1)),
                'rate': float(original_req_data_from_sheet.get('Amount', 0)) / (float(original_req_data_from_sheet.get('Quantity', 1)) or 1),
                'amount': float(original_req_data_from_sheet.get('Amount', 0))
            })
-       elif not voucher_template_data['items_for_loop']:
+       elif not voucher_template_data['items_for_loop']: # Fallback if absolutely no items
             voucher_template_data['items_for_loop'].append({'name': 'N/A', 'description': 'N/A', 'quantity': 0, 'rate': 0, 'amount': 0})
+
+
 
 
        voucher_total_amount_str = form_data_from_html_form.get('voucher_total_amount', '0')
@@ -2324,14 +2298,17 @@ def generate_voucher_route():
        return jsonify({"success": False, "message": "Invalid numeric value for item quantity, rate, or amount."}), 400
 
 
-   voucher_template_data['voucher_currency_for_total'] = form_data_from_html_form.get('voucher_currency_for_total', 'Rs.')
+   # Currency for total display (symbol)
+   voucher_template_data['voucher_currency_for_total'] = form_data_from_html_form.get('voucher_currency_for_total', 'Rs.') # From form
 
 
-   sheets_service = build('sheets', 'v4', credentials=creds)
+   # Signatories
+   sheets_service = build('sheets', 'v4', credentials=creds) # For Sheet2
    approver_data_sheet2 = get_approver_signatures_from_sheet(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
    SIG_IMG_HTML_STYLE = 'max-width:100px; max-height:40px; object-fit:contain;'
 
 
+   # Prepared By
    selected_prepared_by_name = form_data_from_html_form.get('prepared_by_name_selected', original_req_data_from_sheet.get('Name', 'N/A'))
    voucher_template_data['prepared_by_name_selected'] = selected_prepared_by_name
    prepared_by_sig_url = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(selected_prepared_by_name, "")
@@ -2339,18 +2316,22 @@ def generate_voucher_route():
    voucher_template_data['prepared_by_signature_html'] = f'<img src="data:{prepared_by_mime};base64,{prepared_by_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if prepared_by_sig_b64 else ""
 
 
+   # Finance Review
    finance_review_name_on_form = form_data_from_html_form.get('finance_review_name', '').strip()
    voucher_template_data['finance_review_name'] = finance_review_name_on_form if finance_review_name_on_form else approver_data_sheet2.get('finance_review_name_default', 'N/A')
-   finance_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['finance_review_name'], approver_data_sheet2.get('finance_review_signature_url', ''))
+   finance_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['finance_review_name'], approver_data_sheet2.get('finance_review_signature_url', '')) # Try mapping first, then default
    finance_sig_b64, finance_mime, _ = get_signature_data_from_url(finance_sig_url_to_use)
    voucher_template_data['finance_signature_html'] = f'<img src="data:{finance_mime};base64,{finance_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if finance_sig_b64 else ""
 
 
-   approved_by_name_on_form = form_data_from_html_form.get('approved_by_name', '').strip()
+   # Approved By
+   approved_by_name_on_form = form_data_from_html_form.get('approved_by_name', '').strip() # This is readonly, from original approval type
    voucher_template_data['approved_by_name'] = approved_by_name_on_form if approved_by_name_on_form else approver_data_sheet2.get('approved_by_name_default', 'N/A')
    approved_by_sig_url_to_use = approver_data_sheet2.get("prepared_by_signature_urls_map", {}).get(voucher_template_data['approved_by_name'], approver_data_sheet2.get('approved_by_signature_url', ''))
    approved_by_sig_b64, approved_by_mime, _ = get_signature_data_from_url(approved_by_sig_url_to_use)
    voucher_template_data['approved_by_signature_html'] = f'<img src="data:{approved_by_mime};base64,{approved_by_sig_b64}" style="{SIG_IMG_HTML_STYLE}">' if approved_by_sig_b64 else ""
+
+
 
 
    env = Environment(loader=FileSystemLoader('templates'), cache_size=0, auto_reload=True)
@@ -2360,8 +2341,8 @@ def generate_voucher_route():
 
    voucher_only_pdf_bytes = None
    merged_pdf_bytes = None
-   final_merged_pdf_view_link = None # Capture view link for dashboard JS
-   final_merged_pdf_content_link = None # Capture content link for sheet storage
+   final_merged_pdf_url = None
+   # temp_dir = tempfile.mkdtemp(prefix='voucher_gen_') # Not needed if not saving voucher-only PDF locally
 
 
    try:
@@ -2381,6 +2362,7 @@ def generate_voucher_route():
            return jsonify({"success": False, "message": "Failed to generate voucher-only PDF content (empty)."}), 500
 
 
+       # Merge with Original Request PDF
        merger = PdfMerger()
        merger.append(BytesIO(voucher_only_pdf_bytes))
 
@@ -2389,11 +2371,11 @@ def generate_voucher_route():
        if original_request_pdf_drive_link and ("drive.google.com" in original_request_pdf_drive_link or re.match(r'^[a-zA-Z0-9_-]{25,}$', original_request_pdf_drive_link)):
            try:
                logging.info(f"Downloading original request PDF from Drive: {original_request_pdf_drive_link}")
-               # Use download_drive_file_bytes for original request PDF as well
                downloaded_request_pdf_bytes = download_drive_file_bytes(original_request_pdf_drive_link, creds)
                merger.append(BytesIO(downloaded_request_pdf_bytes))
            except Exception as e:
                logging.warning(f"Could not download/append original request PDF ({original_request_pdf_drive_link}) to voucher: {e}", exc_info=True)
+               # Decide if this is critical. For now, we proceed with voucher-only if original fails.
        else:
            logging.warning(f"Original request PDF link missing, invalid, or not a Drive link: {original_request_pdf_drive_link}. Voucher will not include it.")
 
@@ -2405,68 +2387,65 @@ def generate_voucher_route():
 
 
        merged_pdf_filename = f'Voucher_Merged_{request_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
-       # Capture both links from upload_file_from_bytes
-       final_merged_pdf_view_link, final_merged_pdf_content_link = upload_file_from_bytes(
+       final_merged_pdf_url = upload_file_from_bytes(
            file_content=merged_pdf_bytes,
            file_name=merged_pdf_filename,
            mime_type='application/pdf'
        )
-       
-       # Determine which URL to store in the sheet for download
-       final_merged_pdf_url_to_store = final_merged_pdf_content_link # Prioritize content link
-       if not final_merged_pdf_url_to_store:
-           final_merged_pdf_url_to_store = final_merged_pdf_view_link # Fallback to view link
-           if not final_merged_pdf_url_to_store:
-               logging.error(f"Failed to get any valid URL for {merged_pdf_filename} after upload.")
-               return jsonify({"success": False, "message": "Failed to upload merged voucher PDF to Drive (no valid link returned)"}), 500
-           logging.warning(f"No webContentLink for {merged_pdf_filename}, falling back to webViewLink for sheet storage.")
+       if not final_merged_pdf_url:
+           return jsonify({"success": False, "message": "Failed to upload merged voucher PDF to Drive"}), 500
 
 
-       logging.info(f"Generate Voucher: Logo URL passed to voucher_template.html: '{voucher_template_data['voucher_logo_url']}'")
-
-
+       # Update Sheet1 with the voucher link and generation timestamp
        updated_sheet, update_msg = update_sheet_status(
            request_id,
-           voucher_link=final_merged_pdf_url_to_store, # Store the direct download link if possible
+           voucher_link=final_merged_pdf_url,
            voucher_generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-           voucher_approved_by="",
+           voucher_approved_by="",  # Cleared when voucher is generated
            voucher_rejection_reason="",
-           voucher_prepared_by=selected_prepared_by_name
+           voucher_prepared_by=selected_prepared_by_name  # This correctly updates the sheet
        )
 
 
        if not updated_sheet:
            logging.error(f"Failed to update sheet with voucher link for Request ID {request_id}: {update_msg}")
+           # This is problematic: voucher generated and uploaded, but sheet not updated.
+           # Consider how to handle this (e.g., manual alert).
            return jsonify({"success": False, "message": f"Voucher generated, but failed to update sheet: {update_msg}. Manual check required."}), 500
 
 
-       logging.info(f"Successfully generated, merged, and uploaded voucher for {request_id}. Final PDF URL stored: {final_merged_pdf_url_to_store}. View Link for dashboard: {final_merged_pdf_view_link}")
-       # The dashboard should use the view link for opening in browser
-       return jsonify({"success": True, "voucher_url": final_merged_pdf_view_link, "request_id": request_id})
+       logging.info(f"Successfully generated, merged, and uploaded voucher for {request_id}. Final PDF URL: {final_merged_pdf_url}")
+       return jsonify({"success": True, "voucher_url": final_merged_pdf_url, "request_id": request_id})
 
 
-   except HttpError as e:
+   except HttpError as e: # Google API errors
        logging.error(f"Google API HttpError in generate_voucher_route: {e.resp.status} - {e._get_reason()}", exc_info=True)
        return jsonify({"success": False, "message": f"Google API Error: {e._get_reason()}"}), 500
-   except ValueError as ve:
+   except ValueError as ve: # Type conversion errors
        logging.error(f"ValueError in generate_voucher_route: {ve}", exc_info=True)
        return jsonify({"success": False, "message": str(ve)}), 400
-   except Exception as e:
+   except Exception as e: # Other unexpected errors
        import traceback
        logging.error(f"Unexpected error in generate_voucher_route: {traceback.format_exc()}")
        return jsonify({"success": False, "message": f"An unexpected server error occurred: {str(e)}"}), 500
 
-
 if __name__ == '__main__':
-    if not os.path.exists(UPLOAD_FOLDER):
-        try:
-            os.makedirs(UPLOAD_FOLDER);
-            logging.info(f"Created upload folder: {UPLOAD_FOLDER}")
-        except Exception as e:
-            logging.error(f"Failed to create UPLOAD_FOLDER {UPLOAD_FOLDER}: {e}", exc_info=True)
+   if not os.path.exists(UPLOAD_FOLDER):
+       try:
+           os.makedirs(UPLOAD_FOLDER);
+           logging.info(f"Created upload folder: {UPLOAD_FOLDER}")
+       except Exception as e:
+           logging.error(f"Failed to create UPLOAD_FOLDER {UPLOAD_FOLDER}: {e}", exc_info=True)
 
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    logging.warning("OAUTHLIB_INSECURE_TRANSPORT is enabled. DO NOT USE THIS IN A PRODUCTION ENVIRONMENT.")
 
-    logging.info("Starting Flask development server...")
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=True)
+   # For local development with Google OAuth, OAUTHLIB_INSECURE_TRANSPORT is often needed
+   # if your redirect URI is http and not https. Render typically handles HTTPS.
+   # Check if running locally or on Render before setting this.
+   # if os.environ.get("RENDER") is None: # Example: only set if not on Render
+   os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+   logging.warning("OAUTHLIB_INSECURE_TRANSPORT is enabled. DO NOT USE THIS IN A PRODUCTION ENVIRONMENT WITHOUT HTTPS.")
+
+
+   port = int(os.environ.get('PORT', 5000)) # Use Render's port or default to 5000
+   logging.info(f"Starting Flask development server on port {port}...")
+   app.run(debug=True, host='0.0.0.0', port=port, use_reloader=True)
