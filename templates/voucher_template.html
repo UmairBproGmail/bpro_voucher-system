@@ -180,8 +180,8 @@
 <div class="voucher-container">
   <div class="voucher-header">
       {% if voucher_data_from_form.voucher_logo_url and voucher_data_from_form.voucher_logo_url != 'None' and voucher_data_from_form.voucher_logo_url.strip() %}
-      <img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Logo" class="logo">
-      {% endif %}
+<img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Logo" class="logo">
+{% endif %}
       <div class="voucher-title">PAYMENT VOUCHER</div>
       <div class="voucher-number">
           Voucher No. {{ voucher_data_from_form.request_id }}<br>
