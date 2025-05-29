@@ -58,7 +58,28 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 app = Flask(__name__)
 app.secret_key = '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'
 
+GOOGLE_CLIENT_SECRETS_ENV = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+CLIENT_SECRETS_FILE = 'credentials.json' # Default local path
 
+if GOOGLE_CLIENT_SECRETS_ENV:
+    # If running on Render or other environment where variable is set,
+    # write the JSON content to a temporary file.
+    # Use tempfile to ensure cleanup (though Render's ephemeral filesystem helps too)
+    try:
+        temp_dir = tempfile.gettempdir()
+        temp_credentials_path = os.path.join(temp_dir, CLIENT_SECRETS_FILE)
+        with open(temp_credentials_path, "w") as f:
+            f.write(GOOGLE_CLIENT_SECRETS_ENV)
+        CLIENT_SECRETS_FILE = temp_credentials_path
+        logging.info(f"Using credentials from environment variable, written to temporary file: {CLIENT_SECRETS_FILE}")
+    except Exception as e:
+        logging.error(f"Failed to write credentials.json from environment variable: {e}", exc_info=True)
+        # Fallback to local file path if temp write fails, but this might not work on Render
+        CLIENT_SECRETS_FILE = 'credentials.json'
+        logging.warning("Falling back to 'credentials.json' directly. This might fail on Render if file is missing.")
+else:
+    logging.info("GOOGLE_CREDENTIALS_JSON environment variable not found. Attempting to load 'credentials.json' from local directory.")
+   
 # Configuration
 GOOGLE_DRIVE_FOLDER_ID = "1B62aXBQwjH8-ZOwWfJt-d5YPiq7Z2exN"
 GOOGLE_SHEETS_SPREADSHEET_ID = "1tGqhzBaEwGEh9Vq7GW-toGiO-hW25Sc4sjv4Nct9SqQ"
@@ -269,7 +290,9 @@ def allowed_file(filename):
 
 
 def get_google_auth_flow():
-   return Flow.from_client_secrets_file('credentials.json', scopes=SCOPES, redirect_uri=url_for('oauth2callback', _external=True))
+   # Use the dynamically determined CLIENT_SECRETS_FILE path
+   return Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=url_for('oauth2callback', _external=True))
+
 
 
 
