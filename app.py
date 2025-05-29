@@ -1357,67 +1357,56 @@ def index():
 
 @app.route('/authorize')
 def authorize():
-   flow = get_google_auth_flow()
-   authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true',
-                                                     prompt='consent')
-   session['state'] = state
-   logging.info("Redirecting to Google authorization URL.")
-   return redirect(authorization_url)
-
-
+    flow = get_google_auth_flow()
+    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true',
+                                                      prompt='consent')
+    session['state'] = state
+    logging.info("Redirecting to Google authorization URL.")
+    return redirect(authorization_url)
 
 
 @app.route('/oauth2callback')
 def oauth2callback():
-   state = session.pop('state', None)
-   if not state or not request.args.get('state') or state != request.args.get('state'):
-       logging.error("OAuth2 callback: State mismatch or missing.")
-       return 'Invalid state parameter or state missing in request.', 400
+    state = session.pop('state', None)
+    if not state or not request.args.get('state') or state != request.args.get('state'):
+        logging.error("OAuth2 callback: State mismatch or missing.")
+        return 'Invalid state parameter or state missing in request.', 400
 
+    flow = get_google_auth_flow()
+    try:
+        authorization_response = request.url
+        if not authorization_response.startswith("https://"):
+            authorization_response = authorization_response.replace("http://", "https://", 1)
 
-   flow = get_google_auth_flow()
-   try:
-       authorization_response = request.url
-       if not authorization_response.startswith("https://"): # Ensure HTTPS for Render
-           authorization_response = authorization_response.replace("http://", "https://", 1)
+        logging.info(
+            f"Fetching token using authorization response: {authorization_response[:100]}...")
+        flow.fetch_token(authorization_response=authorization_response)
+        credentials = flow.credentials
 
+        if not credentials or not credentials.token:
+            logging.error("OAuth2 callback: Failed to obtain token from Google.")
+            return 'Failed to obtain token from Google. The authorization response might have been invalid or token fetch failed.', 400
 
-       logging.info(
-           f"Fetching token using authorization response: {authorization_response[:100]}...") # Log part of URL for debug
-       flow.fetch_token(authorization_response=authorization_response)
-       credentials = flow.credentials
+        creds_data = {
+            'token': credentials.token, 'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri, 'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret, 'scopes': credentials.scopes
+        }
+        session['credentials'] = json.dumps(creds_data)
+        logging.info("Successfully obtained and stored credentials in session.")
 
+        try:
+            sheets_service = build('sheets', 'v4', credentials=credentials)
+            ensure_sheet_headers(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
+            logging.info("Ensured sheet headers after successful authentication.")
+        except Exception as e_sheet:
+            logging.error(f"Error ensuring sheet headers after auth: {e_sheet}", exc_info=True)
 
-       if not credentials or not credentials.token:
-           logging.error("OAuth2 callback: Failed to obtain token from Google.")
-           return 'Failed to obtain token from Google. The authorization response might have been invalid or token fetch failed.', 400
-
-
-       creds_data = {
-           'token': credentials.token, 'refresh_token': credentials.refresh_token,
-           'token_uri': credentials.token_uri, 'client_id': credentials.client_id,
-           'client_secret': credentials.client_secret, 'scopes': credentials.scopes
-       }
-       session['credentials'] = json.dumps(creds_data)
-       logging.info("Successfully obtained and stored credentials in session.")
-
-
-       try:
-           sheets_service = build('sheets', 'v4', credentials=credentials)
-           ensure_sheet_headers(sheets_service, GOOGLE_SHEETS_SPREADSHEET_ID)
-           logging.info("Ensured sheet headers after successful authentication.")
-       except Exception as e_sheet:
-           logging.error(f"Error ensuring sheet headers after auth: {e_sheet}", exc_info=True)
-           # Don't fail the whole auth for this, but log it.
-
-
-       return redirect(url_for('index'))
-   except Exception as e:
-       logging.error(f"Error during OAuth2 callback processing: {e}", exc_info=True)
-       session.pop('credentials', None) # Clear potentially bad creds
-       return 'An error occurred during authentication. Please try authorizing again. Details: ' + str(e), 500
-
-
+        return redirect(url_for('index'))
+    except Exception as e:
+        logging.error(f"Error during OAuth2 callback processing: {e}", exc_info=True)
+        session.pop('credentials', None)
+        return 'An error occurred during authentication. Please try authorizing again. Details: ' + str(e), 500
 
 
 @app.route('/logout')
@@ -1430,9 +1419,6 @@ def logout():
    session.pop('current_username', None)
    logging.info("User logged out.")
    return redirect(url_for('index'))
-
-
-
 
 @app.route('/submit', methods=['POST'])
 def submit():
