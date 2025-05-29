@@ -2446,6 +2446,6 @@ if __name__ == '__main__':
    logging.warning("OAUTHLIB_INSECURE_TRANSPORT is enabled. DO NOT USE THIS IN A PRODUCTION ENVIRONMENT WITHOUT HTTPS.")
 
 
-   port = int(os.environ.get('PORT', 5000)) # Use Render's port or default to 5000
+   port = int(os.environ.get('PORT', 10000)) # Use Render's port or default to 5000
    logging.info(f"Starting Flask development server on port {port}...")
    app.run(debug=True, host='0.0.0.0', port=port, use_reloader=True)
