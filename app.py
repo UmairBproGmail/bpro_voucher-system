@@ -222,10 +222,8 @@ for name, data_url in COMPANY_LOGOS_BASE64.items():
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
 SCOPES = [
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.metadata'
+   'https://www.googleapis.com/auth/drive',
+   'https://www.googleapis.com/auth/spreadsheets'
 ]
 
 
@@ -423,19 +421,16 @@ def upload_file_from_path(file_path, file_name, mime_type):
        web_view_link = uploaded_file.get('webViewLink')
        if not file_id: logging.error(f"Drive file creation failed (path): {file_name}"); return None
        try:
-    permission = {'type': 'anyone', 'role': 'reader'}
-    drive_service.permissions().create(
-        fileId=file_id, 
-        body=permission, 
-        fields='id',
-        supportsAllDrives=True  # Add this for shared drives
-    ).execute()
-    logging.info(f"Set public permission for file ID: {file_id}")
-except HttpError as error:
-    if error.resp.status == 403:
-        logging.warning(f"No permission to make file public: {error}")
-    else:
-        logging.warning(f"Could not set public permission for {file_id}: {error}")
+           permission = {'type': 'anyone', 'role': 'reader'}
+           drive_service.permissions().create(fileId=file_id, body=permission, fields='id').execute()
+           logging.info(f"Set public permission for file ID: {file_id}")
+       except HttpError as error:
+           logging.warning(f"Could not set public permission for {file_id}: {error}", exc_info=True)
+       logging.info(f"Uploaded {file_name} from path. ID: {file_id}, Link: {web_view_link}")
+       return web_view_link
+   except Exception as e:
+       logging.error(f"Error uploading from path: {e}", exc_info=True);
+       return None
 
 
 
@@ -463,20 +458,22 @@ def upload_file_from_bytes(file_content, file_name, mime_type, file_id_to_update
            file_id = uploaded_file.get('id');
            web_view_link = uploaded_file.get('webViewLink')
            if not file_id: logging.error(f"Drive file creation failed (bytes): {file_name}"); return None
-          try:
-    permission = {'type': 'anyone', 'role': 'reader'}
-    drive_service.permissions().create(
-        fileId=file_id, 
-        body=permission, 
-        fields='id',
-        supportsAllDrives=True  # Add this for shared drives
-    ).execute()
-    logging.info(f"Set public permission for file ID: {file_id}")
-except HttpError as error:
-    if error.resp.status == 403:
-        logging.warning(f"No permission to make file public: {error}")
-    else:
-        logging.warning(f"Could not set public permission for {file_id}: {error}")
+           try:
+               permission = {'type': 'anyone', 'role': 'reader'}
+               drive_service.permissions().create(fileId=file_id, body=permission, fields='id').execute()
+               logging.info(f"Set public permission for new file ID: {file_id}")
+           except HttpError as error:
+               logging.warning(f"Could not set public permission for {file_id}: {error}", exc_info=True)
+       logging.info(f"Uploaded/Updated file from bytes. ID: {file_id}, Link: {web_view_link}")
+       return web_view_link
+   except HttpError as e:
+       logging.error(f"Google API HttpError during file upload/update: {e.resp.status} - {e._get_reason()}",
+                     exc_info=True)
+       return None
+   except Exception as e:
+       logging.error(f"Error uploading/updating from bytes: {e}", exc_info=True);
+       return None
+
 
 
 
