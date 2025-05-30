@@ -60,7 +60,7 @@ app = Flask(__name__)
 app.secret_key = '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' # IMPORTANT: Change this to a strong, random key in production!
 
 # Configuration
-GOOGLE_DRIVE_FOLDER_ID = "1B62aXBQwjH8-ZOwWfJt-d5YPiq7Z2exN"
+GOOGLE_DRIVE_FOLDER_ID = "1R0iujdhanU-XQ1eFUG2SXJ_k5puj8X0_"
 GOOGLE_SHEETS_SPREADSHEET_ID = "1tGqhzBaEwGEh9Vq7GW-toGiO-hW25Sc4sjv4Nct9SqQ"
 
 
