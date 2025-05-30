@@ -57,8 +57,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 
 
 app = Flask(__name__)
-app.secret_key = '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'
-
+app.secret_key = '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' # IMPORTANT: Change this to a strong, random key in production!
 
 # Configuration
 GOOGLE_DRIVE_FOLDER_ID = "1B62aXBQwjH8-ZOwWfJt-d5YPiq7Z2exN"
@@ -104,62 +103,120 @@ EMAIL_SMTP_SERVER = "smtp.gmail.com" # Use "smtp.office365.com" for Outlook/Offi
 EMAIL_SMTP_PORT = 587
 
 
-# Company Logos
+# --- START OF MODIFIED SECTION FOR GITHUB LOGOS ---
+
+# GitHub Configuration for Logos (USER ACTION REQUIRED)
+# Replace with your actual GitHub username, repository name, and branch name.
+# The repository MUST be public for this to work without authentication.
+GITHUB_USERNAME = "UmairBproGmail"
+GITHUB_REPOSITORY_NAME = "bpro_voucher-system"
+GITHUB_BRANCH_NAME = "main"
+
+# Correct base URL for raw GitHub content
+GITHUB_RAW_CONTENT_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{GITHUB_REPOSITORY_NAME}/{GITHUB_BRANCH_NAME}/static/images/"
+
+# Company Logos - now sourced from GitHub (these are URLs)
 COMPANY_LOGOS = {
-    "ML-1": "https://i.ibb.co/dwBCbbSs/machine-learning-1-logo.jpg",
-    "Mpro": "https://i.ibb.co/ymjZ22Pb/Market-Pro-Logo.png",
-    "Enlatics": "https://i.ibb.co/ymvw2Pg5/Enlatics-Logo.png",
-    "DS": "https://i.ibb.co/bR1Q6vF8/Developers-Studio-Logo.png",
-    "CS": "https://i.ibb.co/BbfNGsR/Cappersoft-Logo.png",
-    "HRB": "https://i.ibb.co/MyTSFfmp/HRB-Logo.png",
-    "Peace": "https://i.ibb.co/tMc956nm/peace-logo.jpg",
-    "Zoompay": "https://i.ibb.co/dwg2SGHz/Zoom-Pay-Logo.png",
-    "AML Watcher": "https://i.ibb.co/pjdSs1dX/AML-Watcher-Logo.png",
-    "Bpro": "https://i.ibb.co/R4739SnZ/bpro-ai-logo.jpg",
-    "Facia": "https://i.ibb.co/RTFpHX33/Facia-Logo.png",
-    "the kyb": "https://i.ibb.co/fYF8h8Wn/The-KYB-Logo.png",
-    "Kyc/Aml": "https://i.ibb.co/7dKFhKBm/KYC-AML-Guide-Logo.png",
-    "Techub": "https://i.ibb.co/nsY802w3/Techub-Logo.png",
+    "ML-1": GITHUB_RAW_CONTENT_BASE_URL + "machine-learning-1-logo.jpg",
+    "Mpro": GITHUB_RAW_CONTENT_BASE_URL + "Market-Pro-Logo.png",
+    "Enlatics": GITHUB_RAW_CONTENT_BASE_URL + "Enlatics-Logo.png",
+    "DS": GITHUB_RAW_CONTENT_BASE_URL + "Developers-Studio-Logo.png",
+    "CS": GITHUB_RAW_CONTENT_BASE_URL + "Cappersoft-Logo.png",
+    "HRB": GITHUB_RAW_CONTENT_BASE_URL + "HRB-Logo.png",
+    "Peace": GITHUB_RAW_CONTENT_BASE_URL + "peace-logo.jpg",
+    "Zoompay": GITHUB_RAW_CONTENT_BASE_URL + "Zoom-Pay-Logo.png",
+    "AML Watcher": GITHUB_RAW_CONTENT_BASE_URL + "AML-Watcher-Logo.png",
+    "Bpro": GITHUB_RAW_CONTENT_BASE_URL + "bpro-ai-logo.jpg",
+    "Facia": GITHUB_RAW_CONTENT_BASE_URL + "Facia-Logo.png",
+    "the kyb": GITHUB_RAW_CONTENT_BASE_URL + "The-KYB-Logo.png",
+    "Kyc/Aml": GITHUB_RAW_CONTENT_BASE_URL + "KYC-AML-Guide-Logo.png",
+    "Techub": GITHUB_RAW_CONTENT_BASE_URL + "Techub-Logo.png",
 }
 
-# Base64 logo dictionary
+# Base64 logo dictionary (this will be populated by the code below, containing data URLs)
 COMPANY_LOGOS_BASE64 = {}
 
-# Output folder (optional - not used if embedding base64 only)
-os.makedirs("logos", exist_ok=True)
+# Output folder for downloaded logos (optional, primarily for debugging or local caching)
+LOGOS_DIR = "logos"
+os.makedirs(LOGOS_DIR, exist_ok=True)
 
-for name, url in COMPANY_LOGOS.items():
-    try:
-        print(f"Downloading: {name}")
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
 
-        # Get MIME type
-        content_type = response.headers.get("Content-Type", "image/png")
+def download_and_convert_logos():
+    """Download logos from GitHub and convert them to base64 data URLs"""
+    logging.info("Starting download and base64 encoding of company logos from GitHub...")
 
-        # Convert to base64
-        encoded = base64.b64encode(response.content).decode("utf-8")
-        base64_url = f"data:{content_type};base64,{encoded}"
-        COMPANY_LOGOS_BASE64[name] = base64_url
+    for name, url in COMPANY_LOGOS.items():
+        try:
+            # Critical check: Ensure user has replaced placeholders
+            if "YOUR_GITHUB_USERNAME" in GITHUB_USERNAME or \
+                    "YOUR_REPOSITORY_NAME" in GITHUB_REPOSITORY_NAME or \
+                    "YOUR_GITHUB_USERNAME" in url or \
+                    "YOUR_REPOSITORY_NAME" in url:
+                logging.error(
+                    f"GitHub configuration placeholder detected for logo '{name}'. URL: {url}. "
+                    f"Please update GITHUB_USERNAME and GITHUB_REPOSITORY_NAME variables."
+                )
+                COMPANY_LOGOS_BASE64[name] = ""
+                continue
 
-        # Optional: save the image locally
-        ext = content_type.split("/")[-1]
-        filename = f"logos/{name.replace('/', '_')}.{ext}"
-        with open(filename, "wb") as f:
-            f.write(response.content)
+            logging.info(f"Processing logo for: {name} from {url}")
+            response = requests.get(url, timeout=20)
+            response.raise_for_status()
 
-    except Exception as e:
-        print(f"❌ Failed for {name}: {e}")
+            # Get MIME type from Content-Type header
+            content_type = response.headers.get("Content-Type")
+            if not content_type or not content_type.startswith("image/"):
+                logging.warning(
+                    f"Content-Type for '{name}' is '{content_type}', not recognized as image. "
+                    f"Attempting to infer MIME type from URL extension."
+                )
+                # Try to guess from URL extension as fallback
+                file_extension = os.path.splitext(url)[1].lower()
+                mime_map = {
+                    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                    '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp'
+                }
+                if file_extension in mime_map:
+                    content_type = mime_map[file_extension]
+                    logging.info(f"Inferred MIME type '{content_type}' from extension '{file_extension}'.")
+                else:
+                    logging.error(
+                        f"Could not determine valid image MIME type for '{name}'. "
+                        f"Content-Type: '{content_type}', Extension: '{file_extension}'. Skipping."
+                    )
+                    COMPANY_LOGOS_BASE64[name] = ""
+                    continue
 
-# Save the base64 dict to a .py file for future use
-with open("company_logos_base64.py", "w") as f:
-    f.write("COMPANY_LOGOS_BASE64 = {\n")
-    for name, b64 in COMPANY_LOGOS_BASE64.items():
-        f.write(f'    "{name}": "{b64}",\n')
-    f.write("}\n")
+            # Convert to base64
+            image_data = response.content
+            base64_data = base64.b64encode(image_data).decode('utf-8')
+            data_url = f"data:{content_type};base64,{base64_data}"
+            COMPANY_LOGOS_BASE64[name] = data_url
 
-print("✅ Done! Base64 logos saved in company_logos_base64.py")
+            # Optionally save to local cache
+            filename = os.path.join(LOGOS_DIR, f"{name.replace('/', '-')}.{content_type.split('/')[-1]}")
+            with open(filename, 'wb') as f:
+                f.write(image_data)
+            logging.info(f"Successfully processed logo for {name}")
 
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Failed to download logo for {name} from {url}: {str(e)}")
+            COMPANY_LOGOS_BASE64[name] = ""
+        except Exception as e:
+            logging.error(f"Unexpected error processing logo for {name}: {str(e)}")
+            COMPANY_LOGOS_BASE64[name] = ""
+
+
+# Execute the logo processing
+download_and_convert_logos()
+
+# Verify results
+logging.info("Logo processing completed. Results:")
+for name, data_url in COMPANY_LOGOS_BASE64.items():
+    status = "SUCCESS" if data_url else "FAILED"
+    logging.info(f"{name}: {status}")
+
+# --- END OF MODIFIED SECTION FOR GITHUB LOGOS ---
 
 
 UPLOAD_FOLDER = 'uploads'
@@ -216,7 +273,12 @@ import sys
 if sys.platform == "win32":
    WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 else:
-   WKHTMLTOPDF_PATH = '/Users/muhammadumair/PycharmProjects/Voucher System/wkhtmltopdf/bin/wkhtmltopdf.exe' #Adjust if necessary for your Render deployment
+   # For Render, you might need to specify the path if wkhtmltopdf is installed via a buildpack
+   # Or rely solely on weasyprint if that's easier to set up.
+   WKHTMLTOPDF_PATH = '/usr/local/bin/wkhtmltopdf' # Common path for Linux/macOS
+   # Example for Render's buildpack: WKHTMLTOPDF_PATH = '/app/.wkhtmltopdf/bin/wkhtmltopdf'
+   # You should test this on your Render environment.
+   logging.warning(f"Default WKHTMLTOPDF_PATH set to {WKHTMLTOPDF_PATH}. Verify this path for your Render deployment.")
 
 
 PDFKIT_CONFIG = None
@@ -1156,7 +1218,7 @@ def generate_pdf(data, approval_type, attachment_path=None):
          height: 200px;
          width: {{ HTML_REQUESTER_BOX_WIDTH_PERCENT }}%; /* Use Jinja variable */
          padding: 8pt; /* Increased padding */
-         border: 1px solid black;  
+         border: 1px solid black;
          border-radius: 3px; /* Subtle rounding */
          background-color: #f9f9f9;
          text-align: center;
@@ -2164,20 +2226,11 @@ def reject_voucher(request_id):
 
 
 
-@app.route('/error')
-def error_page():
-   message = request.args.get('message', 'An unexpected error occurred.')
-   return render_template('error.html', message=message)
-
-
-
-
 @app.route('/edit_voucher_details/<request_id>')
 @require_auth('dashboard') # Ensure only authenticated dashboard users can access this
 def edit_voucher_details(request_id):
-   creds = get_credentials() # Already checked by require_auth, but good for direct use if needed
+   creds = get_credentials()
    if not creds:
-       # This should ideally not be hit if require_auth is working
        return "Authentication required.", 401
 
 
@@ -2208,8 +2261,9 @@ def edit_voucher_details(request_id):
 
 
    company_name_from_request = voucher_form_data.get('Company Name', 'Bpro') # Default to 'Bpro' if not found
-   voucher_form_data['logo_url'] = COMPANY_LOGOS.get(company_name_from_request, COMPANY_LOGOS.get('Bpro', '')) # Fallback to Bpro logo then empty
 
+   # Fetch base64 logo directly for embedding in the voucher HTML
+   voucher_form_data['logo_data_url'] = COMPANY_LOGOS_BASE64.get(company_name_from_request, COMPANY_LOGOS_BASE64.get('Bpro', '')) # Fallback to Bpro logo then empty
 
    try:
        amount = float(voucher_form_data.get('Amount', 0))
@@ -2251,7 +2305,8 @@ def edit_voucher_details(request_id):
                           request_data=voucher_form_data, # This now contains merged data
                           CEO_APPROVER_NAME=CEO_APPROVER_NAME,
                           STANDARD_APPROVER_NAME=STANDARD_APPROVER_NAME,
-                          prepared_by_names=prepared_by_names_list) # Pass the curated list
+                          prepared_by_names=prepared_by_names_list,
+                          company_logo_data_url=voucher_form_data['logo_data_url']) # Pass this explicitly for hidden input
 
 
 @app.route('/generate_voucher', methods=['POST'])
@@ -2286,8 +2341,8 @@ def generate_voucher_route():
    voucher_template_data['voucher_iban'] = form_data_from_html_form.get('voucher_iban', original_req_data_from_sheet.get('IBAN Number', ''))
 
 
-   # Company Logo: Use the logo URL from the hidden input which was derived in edit_voucher_details
-   voucher_template_data['voucher_logo_url'] = form_data_from_html_form.get('voucher_logo_url', '')
+   # Company Logo: Use the logo data URL from the hidden input from voucher_edit_form
+   voucher_template_data['voucher_logo_data_url'] = form_data_from_html_form.get('voucher_logo_data_url', '')
 
 
    # Approval Date: Use the one from the form (hidden input, sourced from sheet initially)
