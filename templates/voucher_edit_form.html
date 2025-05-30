@@ -144,12 +144,15 @@
           <input type="hidden" name="approval_date" value="{{ request_data['Approval Date'] }}">
           <input type="hidden" name="original_currency_from_request" value="{{ request_data['Currency'] }}">
           <input type="hidden" name="company_name_from_request" value="{{ request_data['Company Name'] }}">
+          <!-- IMPORTANT: Pass the base64 logo data URL here -->
+          <input type="hidden" name="voucher_logo_data_url" value="{{ company_logo_data_url }}">
 
           <fieldset>
               <legend>Voucher Header</legend>
               <div class="form-group">
-                  <label for="voucher_logo_url">Company Logo URL:</label>
-                  <input type="url" id="voucher_logo_url" name="voucher_logo_url" value="{{ request_data.logo_url }}" class="readonly-field" readonly>
+                  <label for="voucher_logo_url">Company Logo Data URL:</label>
+                  <!-- Display the data URL, but make it read-only and use the correct variable -->
+                  <input type="url" id="voucher_logo_url" value="{{ company_logo_data_url }}" class="readonly-field" readonly>
               </div>
                <div class="form-group">
                   <label for="company_name_display">Company Name:</label>
