@@ -121,6 +121,44 @@ COMPANY_LOGOS = {
     "Techub": "https://i.ibb.co/nsY802w3/Techub-Logo.png",
 }
 
+# Base64 logo dictionary
+COMPANY_LOGOS_BASE64 = {}
+
+# Output folder (optional - not used if embedding base64 only)
+os.makedirs("logos", exist_ok=True)
+
+for name, url in COMPANY_LOGOS.items():
+    try:
+        print(f"Downloading: {name}")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+
+        # Get MIME type
+        content_type = response.headers.get("Content-Type", "image/png")
+
+        # Convert to base64
+        encoded = base64.b64encode(response.content).decode("utf-8")
+        base64_url = f"data:{content_type};base64,{encoded}"
+        COMPANY_LOGOS_BASE64[name] = base64_url
+
+        # Optional: save the image locally
+        ext = content_type.split("/")[-1]
+        filename = f"logos/{name.replace('/', '_')}.{ext}"
+        with open(filename, "wb") as f:
+            f.write(response.content)
+
+    except Exception as e:
+        print(f"❌ Failed for {name}: {e}")
+
+# Save the base64 dict to a .py file for future use
+with open("company_logos_base64.py", "w") as f:
+    f.write("COMPANY_LOGOS_BASE64 = {\n")
+    for name, b64 in COMPANY_LOGOS_BASE64.items():
+        f.write(f'    "{name}": "{b64}",\n')
+    f.write("}\n")
+
+print("✅ Done! Base64 logos saved in company_logos_base64.py")
+
 
 
 UPLOAD_FOLDER = 'uploads'
