@@ -222,8 +222,10 @@ for name, data_url in COMPANY_LOGOS_BASE64.items():
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
 SCOPES = [
-   'https://www.googleapis.com/auth/drive',
-   'https://www.googleapis.com/auth/spreadsheets'
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.metadata'
 ]
 
 
