@@ -145,12 +145,12 @@
           color: #333;
       }
       .total-amount-display {
-          font-family: 'Inter', Arial, sans-serif;
           font-weight: bold;
           font-size: 11pt;
           margin-top: 6px;
           text-align: right;
           color: #222;
+          font-family: 'Inter', Arial, sans-serif;
       }
       /* Divider with title */
       .divider-with-title {
@@ -178,22 +178,16 @@
 </head>
 <body>
 <div class="voucher-container">
- <div class="voucher-header">
-    {% if voucher_data_from_form.voucher_logo_url and voucher_data_from_form.voucher_logo_url != 'None' and voucher_data_from_form.voucher_logo_url.strip() %}
-        <img src="{{ voucher_data_from_form.voucher_logo_url }}" alt="Company Logo" class="logo">
-    {% else %}
-        {# Added for debugging #}
-        <div style="font-size:8pt; color:red; text-align:center; float:right; margin-right:650px; margin-top:30px; width:100px;">
-            LOGO MISSING OR INVALID URL: <br> {{ voucher_data_from_form.voucher_logo_url | default('NOT SET', true) }}
-        </div>
-    {% endif %}
-    <div class="voucher-title">PAYMENT VOUCHER</div>
-    <div class="voucher-number">
-        Voucher No. {{ voucher_data_from_form.request_id }}<br>
-        Dated: {{ voucher_data_from_form.approval_date.split()[0] if voucher_data_from_form.approval_date else 'N/A' }}
-    </div>
-</div>
-
+  <div class="voucher-header">
+      {% if voucher_data_from_form.voucher_logo_data_url and voucher_data_from_form.voucher_logo_data_url != 'None' and voucher_data_from_form.voucher_logo_data_url.strip() %}
+      <img src="{{ voucher_data_from_form.voucher_logo_data_url }}" alt="Logo" class="logo">
+      {% endif %}
+      <div class="voucher-title">PAYMENT VOUCHER</div>
+      <div class="voucher-number">
+          Voucher No. {{ voucher_data_from_form.request_id }}<br>
+          Dated: {{ voucher_data_from_form.approval_date.split()[0] if voucher_data_from_form.approval_date else 'N/A' }}
+      </div>
+  </div>
 
 
   <div class="section-title">Payment Details</div>
