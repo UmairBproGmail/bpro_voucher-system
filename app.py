@@ -268,19 +268,15 @@ DATE_TEXT_OFFSET_Y_IN_STAMP = 10
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
 import sys
-
+import logging
 
 if sys.platform == "win32":
-   WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+    WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 else:
-   # For Render, you might need to specify the path if wkhtmltopdf is installed via a buildpack
-   # Or rely solely on weasyprint if that's easier to set up.
-   WKHTMLTOPDF_PATH = '/usr/local/bin/wkhtmltopdf' # Common path for Linux/macOS
-   # Example for Render's buildpack: WKHTMLTOPDF_PATH = '/app/.wkhtmltopdf/bin/wkhtmltopdf'
-   # You should test this on your Render environment.
-   logging.warning(f"Default WKHTMLTOPDF_PATH set to {WKHTMLTOPDF_PATH}. Verify this path for your Render deployment.")
+    # Use environment variable if provided (e.g. Render or production server)
+    WKHTMLTOPDF_PATH = os.environ.get('WKHTMLTOPDF_PATH', '/usr/bin/wkhtmltopdf')
+    logging.warning(f"Using WKHTMLTOPDF_PATH: {WKHTMLTOPDF_PATH}. Make sure this path is valid on your deployment environment.")
 
 
 PDFKIT_CONFIG = None
